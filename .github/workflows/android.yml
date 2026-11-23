@@ -1,12 +1,14 @@
-# Builds the Google Play bundle (.aab) and a test .apk in the cloud.
-# Run it from the Actions tab ("Run workflow") or by pushing a tag like v1.0.1.
-# Needs four repository secrets (Settings > Secrets and variables > Actions):
+# Builds the game for Android in the cloud on every push to main (or from Actions > Run workflow).
+# Always: a test .apk you can install on your phone.
+# With four repository secrets (Settings > Secrets and variables > Actions):
 #   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+# it also builds the signed .aab for Google Play.
 name: Android build
 
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ['v*']
 
 jobs:
@@ -34,12 +36,36 @@ jobs:
           python3 scripts/set-admob-app-id.py
           npx cap sync android
 
-      - name: Restore the upload key
+      - name: Build a test .apk (installs on any phone, no key needed)
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 1.0.${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/svetlyachki-test.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: svetlyachki-test-apk-${{ github.run_number }}
+          path: ${{ runner.temp }}/svetlyachki-test.apk
+
+      - name: Check for the upload key
+        id: key
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No KEYSTORE_BASE64 secret yet: skipping the signed Google Play build."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Build .aab and .apk
+      - name: Build the signed .aab for Google Play
+        if: steps.key.outputs.present == 'true'
         working-directory: android
         env:
           SVET_KEYSTORE_PATH: ${{ runner.temp }}/upload.jks
@@ -48,13 +74,12 @@ jobs:
           SVET_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           VERSION_CODE: ${{ github.run_number }}
           VERSION_NAME: 1.0.${{ github.run_number }}
-        run: |
-          chmod +x gradlew
-          ./gradlew bundleRelease assembleRelease --no-daemon
+        run: ./gradlew bundleRelease assembleRelease --no-daemon
 
       - uses: actions/upload-artifact@v4
+        if: steps.key.outputs.present == 'true'
         with:
-          name: svetlyachki-${{ github.run_number }}
+          name: svetlyachki-google-play-${{ github.run_number }}
           path: |
             android/app/build/outputs/bundle/release/app-release.aab
             android/app/build/outputs/apk/release/app-release.apk

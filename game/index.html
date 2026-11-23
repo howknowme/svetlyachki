@@ -40,7 +40,7 @@ body {
   box-sizing: border-box;
 }
 header, .bar { width: 100%; max-width: 400px; margin: 0 auto; }
-header { display: flex; align-items: center; gap: 12px; }
+header { display: flex; align-items: center; gap: 10px; }
 .logo { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
 .logo svg { flex: none; width: 28px; height: 28px; }
 .logo-text { min-width: 0; }
@@ -146,6 +146,31 @@ header { display: flex; align-items: center; gap: 12px; }
 .tab[aria-selected="true"] { background: var(--ink); color: var(--lime); }
 .card .big-score { font: 900 2.6rem var(--display); margin: 0 0 4px; font-variant-numeric: tabular-nums; }
 .rank-badge { display: inline-block; background: var(--ink); color: var(--lime); font: 800 0.78rem var(--body); letter-spacing: 0.06em; padding: 5px 10px; border-radius: 99px; margin: 0 0 12px; }
+.spark-btn { flex: none; font: 700 0.85rem var(--display); color: var(--lime); background: var(--ink-2); border: 0; border-radius: 99px; padding: 6px 10px 6px 8px; display: flex; align-items: center; gap: 4px; cursor: pointer; box-shadow: inset 0 0 0 1.5px rgba(215,239,95,0.35); font-variant-numeric: tabular-nums; }
+.spark-btn .plus { font: 900 0.8rem var(--body); background: var(--lime); color: var(--ink); border-radius: 50%; width: 16px; height: 16px; display: grid; place-items: center; margin-left: 2px; line-height: 1; }
+.spark-btn:active { transform: translateY(1px); }
+.spark-btn:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+.sp { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.card .sp svg { color: #c08a00; }
+.wallet { display: flex; align-items: center; gap: 8px; font: 900 1.6rem var(--display); margin: 0 0 6px; font-variant-numeric: tabular-nums; }
+.wallet svg { color: #c08a00; width: 26px; height: 26px; }
+.shop-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 3px 10px; align-items: center; padding: 10px 12px; background: #fff8e8; border-radius: 10px; margin: 0 0 8px; }
+.shop-row.hot { box-shadow: inset 0 0 0 2px var(--ink); }
+.shop-row b { font: 800 0.92rem var(--body); }
+.shop-row small { grid-column: 1; color: #6a6680; font-size: 0.78rem; line-height: 1.35; }
+.buy { grid-row: 1 / span 2; grid-column: 2; font: 800 0.82rem var(--body); background: var(--ink); color: var(--paper); border: 0; border-radius: 8px; padding: 9px 12px; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 0 #000; display: inline-flex; align-items: center; gap: 4px; }
+.buy .sp svg { color: var(--lime); }
+.buy:disabled { opacity: 0.4; cursor: default; }
+.packs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 14px; }
+.pack { background: #fff8e8; border-radius: 10px; padding: 12px 8px 8px; display: grid; gap: 6px; justify-items: center; text-align: center; position: relative; min-width: 0; }
+.pack .amt { font: 900 1.05rem var(--display); display: flex; align-items: center; gap: 4px; }
+.pack .amt svg { color: #c08a00; }
+.pack .pn { font-size: 0.72rem; color: #6a6680; }
+.pack .tag { position: absolute; top: -7px; right: -4px; background: var(--ember); color: #fff; font: 800 0.64rem var(--body); padding: 2px 7px; border-radius: 99px; transform: rotate(4deg); }
+.pack .buy { grid-row: auto; grid-column: auto; width: 100%; justify-content: center; }
+.pick.locked canvas, .pick.locked .sw { opacity: 0.5; }
+.pick .prem { position: absolute; top: 3px; left: 3px; background: var(--ink); color: var(--lime); font: 800 0.56rem var(--body); padding: 1px 5px; border-radius: 99px; letter-spacing: 0.04em; }
+.pick { position: relative; }
 @media (max-width: 380px) { .chip:not(.sq) svg { display: none; } .chip { font-size: 0.78rem; gap: 4px; } }
 @media (prefers-reduced-motion: reduce) { .card { transform: none; } .chip { transition: none; } }
 </style>
@@ -166,6 +191,7 @@ header { display: flex; align-items: center; gap: 12px; }
         <span id="levelName">Ночь 1 · Лесная поляна</span>
       </div>
     </div>
+    <button class="spark-btn" id="sparkBtn" aria-label="Искры и магазин"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .6 9.7 6.3 15.4 8 9.7 9.7 8 15.4 6.3 9.7.6 8 6.3 6.3Z" fill="currentColor"/></svg><span id="sparkN">0</span><span class="plus" aria-hidden="true">+</span></button>
     <div class="stat"><small>Свет</small><b class="lit" id="lightStat">0/5</b></div>
     <div class="stat"><small>Очки</small><b id="scoreStat">0</b></div>
   </header>
@@ -230,7 +256,11 @@ const SKINS = [
   { id: 'wood', name: 'Дерево', stars: 10, style: 'wood', colors: [['#c8935a', '#8a5a2b'], ['#a8744a', '#6e4423'], ['#d9b07a', '#9c7442'], ['#8f5f3a', '#5a3519'], ['#b98a5e', '#7a5330'], ['#e0bf8f', '#a8875a']] },
   { id: 'lantern', name: 'Фонарики', stars: 16, style: 'lantern', colors: [['#ffd36b', '#3a2a10'], ['#b6ff6b', '#1f3510'], ['#6bd8ff', '#10283a'], ['#ff8a6b', '#3a1810'], ['#e08aff', '#2c1038'], ['#6bffd2', '#103a30']] },
   { id: 'gem', name: 'Самоцветы', stars: 24, style: 'gem', colors: [['#ff4d6d', '#9d0b2c'], ['#4dd8ff', '#0b6d9d'], ['#7dff4d', '#2c9d0b'], ['#ffd24d', '#9d760b'], ['#b84dff', '#5c0b9d'], ['#ff8f4d', '#9d3c0b']] },
-  { id: 'pixel', name: 'Пиксели', stars: 32, style: 'pixel', colors: [['#f7d51d', '#b08f00'], ['#e03c28', '#8f1a0d'], ['#3cb371', '#1d6b3f'], ['#2b7de9', '#14479a'], ['#9b5de5', '#5a2b9c'], ['#f15bb5', '#a1236f']] }
+  { id: 'pixel', name: 'Пиксели', stars: 32, style: 'pixel', colors: [['#f7d51d', '#b08f00'], ['#e03c28', '#8f1a0d'], ['#3cb371', '#1d6b3f'], ['#2b7de9', '#14479a'], ['#9b5de5', '#5a2b9c'], ['#f15bb5', '#a1236f']] },
+  // shop skins: bought with sparks only
+  { id: 'gold', name: 'Золото', cost: 400, style: 'gold', colors: [['#ffd84d', '#9a7400'], ['#ffe9a3', '#a8860b'], ['#f5c542', '#8c6a00'], ['#ffcf70', '#996b00'], ['#e8b923', '#7d5c00'], ['#fff2b8', '#b39200']] },
+  { id: 'aurora', name: 'Аврора', cost: 300, style: 'aurora', colors: [['#5cffc8', '#3a7bff'], ['#c38bff', '#ff5cae'], ['#ffd84d', '#ff7a45'], ['#4dc3ff', '#7a5cff'], ['#7dff8a', '#00b3a1'], ['#ff8ad8', '#8a5cff']] },
+  { id: 'galaxy', name: 'Космос', cost: 350, style: 'galaxy', colors: [['#8a7dff', '#140f3a'], ['#ff5cae', '#3a0f2a'], ['#4dc3ff', '#0f2a3a'], ['#ffd84d', '#3a2f0f'], ['#5cffc8', '#0f3a2f'], ['#ff7a45', '#3a180f']] }
 ];
 /* Themes recolour the whole game. Unlocked by nights finished. */
 const THEMES = [
@@ -239,13 +269,22 @@ const THEMES = [
   { id: 'autumn', name: 'Осенний лес', nights: 4, ink: '#1c130f', ink2: '#2a1d16', ink3: '#3d2a1f', paper: '#f3e3cc', paper2: '#dcc6a6', dim: '#b0957c', accent: '#ffb347', ember: '#e8573a' },
   { id: 'sakura', name: 'Сакура', nights: 7, ink: '#1c1124', ink2: '#2a1a36', ink3: '#3d2650', paper: '#f8e9ef', paper2: '#e3c9d4', dim: '#b495b8', accent: '#ffb7d5', ember: '#ff7aa0' },
   { id: 'neon', name: 'Неоновый город', nights: 10, ink: '#07070d', ink2: '#12121f', ink3: '#1f1f36', paper: '#e9e9ff', paper2: '#c4c4e6', dim: '#8484b8', accent: '#39ffb0', ember: '#ff3df2' },
-  { id: 'dawn', name: 'Рассвет', nights: 15, ink: '#2a1f3d', ink2: '#3a2b52', ink3: '#4e3b6b', paper: '#fff1e0', paper2: '#ecd5bb', dim: '#b9a3c9', accent: '#ffd166', ember: '#ff6b6b' }
+  { id: 'dawn', name: 'Рассвет', nights: 15, ink: '#2a1f3d', ink2: '#3a2b52', ink3: '#4e3b6b', paper: '#fff1e0', paper2: '#ecd5bb', dim: '#b9a3c9', accent: '#ffd166', ember: '#ff6b6b' },
+  // shop themes: bought with sparks only
+  { id: 'aurora', name: 'Северное сияние', cost: 250, ink: '#061a1f', ink2: '#0b2a30', ink3: '#123d45', paper: '#e6fbf5', paper2: '#bfe3da', dim: '#7fb3ac', accent: '#5cffc8', ember: '#c38bff' },
+  { id: 'space', name: 'Звёздный океан', cost: 300, ink: '#05061a', ink2: '#0e1030', ink3: '#1a1d4d', paper: '#eef0ff', paper2: '#c8ccf0', dim: '#8a90c8', accent: '#ffd84d', ember: '#4dc3ff' }
 ];
 let SKIN = SKINS[0], THEME = THEMES[0], COLORS = SKIN.colors;
 const totalStars = () => Object.values(S.stars || {}).reduce((a, b) => a + b, 0);
+const owns = key => (S.owned || []).includes(key);
+const skinOpen = k => owns('skin:' + k.id) || (!k.cost && totalStars() >= k.stars);
+const themeOpen = t => owns('theme:' + t.id) || (!t.cost && (S.cards || []).length >= t.nights);
+// a locked free skin or theme can be opened early for sparks
+const skinPrice = k => k.cost || Math.round((30 + k.stars * 8) / 10) * 10;
+const themePrice = t => t.cost || Math.round((40 + t.nights * 16) / 10) * 10;
 function applyLook() {
-  SKIN = SKINS.find(k => k.id === S.skin && totalStars() >= k.stars) || SKINS[0];
-  THEME = THEMES.find(t => t.id === S.theme && (S.cards || []).length >= t.nights) || THEMES[0];
+  SKIN = SKINS.find(k => k.id === S.skin && skinOpen(k)) || SKINS[0];
+  THEME = THEMES.find(t => t.id === S.theme && themeOpen(t)) || THEMES[0];
   COLORS = SKIN.colors;
   const st = document.documentElement.style;
   [['--ink', 'ink'], ['--ink-2', 'ink2'], ['--ink-3', 'ink3'], ['--paper', 'paper'], ['--paper-2', 'paper2'], ['--dim', 'dim'], ['--lime', 'accent'], ['--ember', 'ember']].forEach(([v, k]) => st.setProperty(v, THEME[k]));
@@ -286,7 +325,7 @@ function freshState() {
   return { level: 0, score: 0, best: 0, lit: 0, board: emptyBoard(), tray: [null, null, null], cards: [], sound: true, seenHelp: false };
 }
 // fields added in the big update; fill them in for older saves too
-S = Object.assign({ bombs: 1, shuffles: 1, streak: 0, moves: 0, lines: 0, stars: {}, music: true, rotates: 3, undos: 1, mode: 'night', seq: 0, dailyBest: null, skin: 'paper', theme: 'paper', nightsSinceAd: 0 }, S);
+S = Object.assign({ bombs: 1, shuffles: 1, streak: 0, moves: 0, lines: 0, stars: {}, music: true, rotates: 3, undos: 1, mode: 'night', seq: 0, dailyBest: null, skin: 'paper', theme: 'paper', nightsSinceAd: 0, sparks: 20, owned: [], noAds: false, iap: [], adSparks: null, sparkLevel: -1, dailySpark: '' }, S);
 applyLook();
 function emptyBoard() { return Array.from({ length: N }, () => Array(N).fill(-1)); }
 function load() {
@@ -657,8 +696,9 @@ function place(i, r0, c0) {
     const words = ['Хорошо!', 'Отлично!', 'Супер!', 'Невероятно!', 'Легенда!'];
     if (power >= 2) floats.push({ text: words[Math.min(power - 2, words.length - 1)], x: G.x + G.bw / 2, y: G.boardY + G.bw * 0.38, t: 0, big: true });
     if (S.board.every(row => row.every(v => v === -1))) {
-      gain += 100; S.bombs++;
+      gain += 100; S.bombs++; addSparks(3);
       floats.push({ text: 'Чистое поле! +100', x: G.x + G.bw / 2, y: G.boardY + G.bw * 0.62, t: 0, big: true });
+      floats.push({ text: '+3 искры', x: G.x + G.bw / 2, y: G.boardY + G.bw * 0.74, t: 0, small: true });
       shake = Math.max(shake, 14);
     }
     S.score += gain;
@@ -691,9 +731,10 @@ function updateHud() {
   $('levelName').textContent = info.daily ? `Ночь дня · ${new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}` : `Ночь ${S.level + 1} · ${info.name}`;
   $('lightStat').textContent = `${Math.min(S.lit, info.need)}/${info.need}`;
   $('scoreStat').textContent = S.score;
+  $('sparkN').textContent = S.sparks || 0;
   const daily = S.mode === 'daily';
   $('bombN').textContent = daily ? '–' : S.bombs; $('shuffleN').textContent = daily ? '–' : S.shuffles; $('undoN').textContent = daily ? '–' : S.undos;
-  const ad = typeof Ads !== 'undefined' && Ads.ready;
+  const ad = true; // when a bonus runs out, the button offers a video or sparks
   $('bombBtn').disabled = daily || (S.bombs < 1 && !bombArmed && !ad);
   $('shuffleBtn').disabled = daily || (S.shuffles < 1 && !ad);
   $('undoBtn').disabled = daily || !undoSnap || (S.undos < 1 && !ad);
@@ -791,8 +832,10 @@ function showWin() {
   if (!S.cards.includes(S.level)) S.cards.push(S.level);
   const st = starsFor(S.moves, info.need);
   S.stars[S.level] = Math.max(S.stars[S.level] || 0, st);
+  const earn = st === 3 ? 10 : 5;
+  if (S.sparkLevel !== S.level) { S.sparkLevel = S.level; addSparks(earn); }
   save(); pushScore(true);
-  const tip = st === 3 ? 'Три звезды! За это даём лишнюю смену фигурок и отмену.' : `Ходов: ${S.moves}. Для трёх звёзд уложись в ${info.need * 4}.`;
+  const tip = (st === 3 ? 'Три звезды! За это даём лишнюю смену фигурок и отмену.' : `Ходов: ${S.moves}. Для трёх звёзд уложись в ${info.need * 4}.`) + ` Награда: ${earn} искр.`;
   const newRank = rankFor(S.cards.length) !== rankFor(S.cards.length - 1) ? rankFor(S.cards.length) : '';
   openCard(`<p class="eyebrow">Ночь ${S.level + 1} зажжена</p>
     <h2>${esc(info.name)}</h2>
@@ -864,7 +907,7 @@ const Ads = {
     } catch (e) { return false; } finally { this.busy = false; }
   },
   async between() {
-    if (!this.ready || this.busy || !AD_IDS.interstitial) return;
+    if (S.noAds || !this.ready || this.busy || !AD_IDS.interstitial) return;
     this.busy = true;
     try { await this.AdMob.prepareInterstitial({ adId: AD_IDS.interstitial, isTesting: !!AD_IDS.testing }); await this.AdMob.showInterstitial(); }
     catch (e) {} finally { this.busy = false; }
@@ -872,21 +915,191 @@ const Ads = {
 };
 Ads.init();
 function offerAdBonus(kind) {
-  if (!Ads.ready) return false;
+  if (S.mode === 'daily') return false;
   const names = { bombs: 'бомбу', undos: 'отмену', shuffles: 'смену фигурок', rotates: '2 поворота' };
-  openCard(`<p class="eyebrow">Бонус</p>
+  const good = GOODS.find(g => g.kind === kind);
+  openCard(`<p class="eyebrow">Бонус · у тебя ${spk(S.sparks)}</p>
     <h2>Бонусы кончились</h2>
-    <p>Посмотри короткое видео и получи ${names[kind]}. Это по желанию.</p>
-    <button class="btn" id="adYes">Смотреть видео</button>
+    <p>${Ads.ready ? `Посмотри короткое видео и получи ${names[kind]}, или купи сразу ${good.label} за искры.` : `Купи ${good.label} за искры. Искры дают за каждую зажжённую ночь.`}</p>
+    ${Ads.ready ? '<button class="btn" id="adYes">Смотреть видео</button>' : ''}
+    <button class="btn${Ads.ready ? ' alt' : ''}" id="adBuy">${good.label} за ${spk(good.cost)}</button>
     <button class="btn alt" id="adNo">Не надо</button>`, card => {
     card.querySelector('#adNo').onclick = closeCard;
-    card.querySelector('#adYes').onclick = async () => {
+    card.querySelector('#adBuy').onclick = () => buyGood(good, () => { closeCard(); say(`+${good.label}`); });
+    const yes = card.querySelector('#adYes');
+    if (yes) yes.onclick = async () => {
       closeCard();
       if (await Ads.rewarded()) { S[kind] += kind === 'rotates' ? 2 : 1; save(); updateHud(); say('Бонус получен!'); }
     };
   });
   return true;
 }
+
+/* ---------- sparks: the shop currency ----------
+   Sparks are earned by playing (each night, three stars, a clear board, the night of the day,
+   short videos) and can be bought in packs through Google Play inside the Android app.
+   They buy bonuses, shop-only skins and themes, and open locked ones early.
+   The night of the day stays fair: no bonuses there, so sparks don't change that table. */
+const SPARK_ICON = '<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 .6 9.7 6.3 15.4 8 9.7 9.7 8 15.4 6.3 9.7.6 8 6.3 6.3Z" fill="currentColor"/></svg>';
+const spk = n => `<span class="sp">${SPARK_ICON}${n}</span>`;
+function addSparks(n) { S.sparks = Math.max(0, (S.sparks || 0) + n); if (typeof updateHud === 'function') try { updateHud(); } catch (e) {} }
+const GOODS = [
+  { kind: 'bombs', n: 3, cost: 30, label: '3 бомбы', desc: 'Убирают квадрат 3×3' },
+  { kind: 'undos', n: 3, cost: 25, label: '3 отмены', desc: 'Вернуть ход назад' },
+  { kind: 'shuffles', n: 3, cost: 25, label: '3 смены', desc: 'Новые фигурки' },
+  { kind: 'rotates', n: 5, cost: 15, label: '5 поворотов', desc: 'Повернуть фигурку' }
+];
+// Google Play products (create them in Play Console with exactly these ids)
+const PACKS = [
+  { id: 'sparks_100', sparks: 100, name: 'Горсть искр', fallback: '49 ₽' },
+  { id: 'sparks_550', sparks: 550, name: 'Мешочек искр', tag: '+10%', fallback: '199 ₽' },
+  { id: 'sparks_1200', sparks: 1200, name: 'Сундук искр', tag: '+20%', fallback: '399 ₽' },
+  { id: 'sparks_3000', sparks: 3000, name: 'Звёздный клад', tag: 'выгодно', fallback: '799 ₽' }
+];
+const SPECIALS = [
+  { id: 'starter_pack', once: true, name: 'Набор новичка', desc: '300 искр, скин «Золото» и 5 бомб. Можно купить один раз.', fallback: '99 ₽' },
+  { id: 'no_ads', once: true, name: 'Без рекламы', desc: 'Навсегда убирает рекламу между ночами. Видео за бонусы остаются, но только по желанию.', fallback: '249 ₽' }
+];
+const AD_SPARKS = 10, AD_SPARKS_PER_DAY = 5;
+const adSparksLeft = () => AD_SPARKS_PER_DAY - (S.adSparks && S.adSparks.date === todayKey() ? S.adSparks.n : 0);
+
+function spendSparks(cost, what, onOk) {
+  if (S.sparks < cost) {
+    openCard(`<p class="eyebrow">У тебя ${spk(S.sparks)}</p>
+      <h2>Не хватает искр</h2>
+      <p>Для «${esc(what)}» нужно ${spk(cost)}. Искры дают за каждую ночь (10 за три звезды), за ночь дня и за чистое поле. Ещё их можно купить в магазине.</p>
+      <button class="btn" id="toShop">В магазин</button>
+      <button class="btn alt" id="nope">Закрыть</button>`, card => {
+      card.querySelector('#toShop').onclick = () => showShop();
+      card.querySelector('#nope').onclick = closeCard;
+    });
+    return;
+  }
+  S.sparks -= cost; save(); updateHud();
+  tone(784, 0, 0.12, 0.07); tone(1175, 0.08, 0.2, 0.06);
+  onOk();
+}
+function buyGood(good, after) {
+  spendSparks(good.cost, good.label, () => { S[good.kind] += good.n; save(); updateHud(); after ? after() : showShop('Готово: ' + good.label); });
+}
+function confirmLook(kind, item, price, back) {
+  openCard(`<p class="eyebrow">У тебя ${spk(S.sparks)}</p>
+    <h2>${kind === 'skin' ? 'Скин' : 'Тема'} «${esc(item.name)}»</h2>
+    <p>${item.cost ? 'Есть только в магазине.' : (kind === 'skin' ? `Откроется бесплатно на ${item.stars} звёздах. Можно открыть сразу.` : `Откроется бесплатно после ${item.nights} ночей. Можно открыть сразу.`)}</p>
+    <button class="btn" id="yes">Открыть за ${spk(price)}</button>
+    <button class="btn alt" id="no">Назад</button>`, card => {
+    card.querySelector('#no').onclick = back;
+    card.querySelector('#yes').onclick = () => spendSparks(price, item.name, () => {
+      S.owned.push(kind + ':' + item.id); S[kind] = item.id; save(); applyLook(); back();
+    });
+  });
+}
+
+const IAP = {
+  ready: false, products: {}, busy: false,
+  get P() { return IS_APP && window.Capacitor.Plugins && window.Capacitor.Plugins.NativePurchases; },
+  all() { return [...PACKS, ...SPECIALS]; },
+  async init() {
+    const P = this.P; if (!P) return;
+    try {
+      const sup = await P.isBillingSupported(); if (!sup || !sup.isBillingSupported) return;
+      const { products } = await P.getProducts({ productIdentifiers: this.all().map(i => i.id), productType: 'inapp' });
+      (products || []).forEach(pr => { this.products[pr.identifier] = pr; });
+      this.ready = Object.keys(this.products).length > 0;
+      await this.recover();
+      P.addListener('transactionUpdated', t => this.settle(t)).catch(() => {});
+    } catch (e) { this.ready = false; }
+  },
+  // purchases that were paid but not handed out yet (a pending payment, or the app closed mid-way)
+  async recover() {
+    try {
+      const { purchases } = await this.P.getPurchases({ productType: 'inapp' });
+      for (const t of purchases || []) await this.settle(t);
+    } catch (e) {}
+  },
+  price(item) { const pr = this.products[item.id]; return pr ? pr.priceString : null; },
+  async settle(t) {
+    if (!t || !t.productIdentifier) return false;
+    if (t.purchaseState && String(t.purchaseState) !== '1') return false;
+    const item = this.all().find(i => i.id === t.productIdentifier); if (!item) return false;
+    const key = t.purchaseToken || t.transactionId;
+    const fresh = !key || !S.iap.includes(key);
+    if (fresh && key) { S.iap.push(key); if (S.iap.length > 200) S.iap = S.iap.slice(-200); }
+    if (item.id === 'no_ads') S.noAds = true;
+    if (item.id === 'starter_pack') { S.starter = true; if (!owns('skin:gold')) S.owned.push('skin:gold'); if (fresh) { S.bombs += 5; S.sparks += 300; } }
+    if (item.sparks && fresh) S.sparks += item.sparks;
+    save(); updateHud();
+    if (!item.once && key) { try { await this.P.consumePurchase({ purchaseToken: key }); } catch (e) {} }
+    return fresh;
+  },
+  async buy(item) {
+    const P = this.P;
+    if (!P || !this.ready || this.busy) return 'unavailable';
+    this.busy = true;
+    try {
+      const t = await P.purchaseProduct({ productIdentifier: item.id, productType: 'inapp', isConsumable: !item.once });
+      if (t && t.purchaseState && String(t.purchaseState) !== '1') return 'pending';
+      await this.settle(t);
+      return 'ok';
+    } catch (e) {
+      const m = String((e && (e.code || e.message)) || e);
+      if (/cancel/i.test(m)) return 'cancel';
+      if (/own/i.test(m)) { await this.recover(); return 'ok'; }
+      return 'error';
+    } finally { this.busy = false; }
+  }
+};
+
+function showShop(flash) {
+  const app = IS_APP, store = IAP.ready;
+  const priceBtn = item => {
+    const owned = item.id === 'no_ads' ? S.noAds : item.id === 'starter_pack' ? !!S.starter : false;
+    if (owned) return '<button class="buy" disabled>Куплено</button>';
+    return `<button class="buy" data-iap="${item.id}"${store ? '' : ' disabled'}>${esc(IAP.price(item) || (app ? item.fallback : 'в приложении'))}</button>`;
+  };
+  const specials = SPECIALS.filter(i => !(i.id === 'no_ads' && S.noAds) && !(i.id === 'starter_pack' && S.starter));
+  const left = adSparksLeft();
+  openCard(`<p class="eyebrow">Магазин</p>
+    <div class="wallet">${SPARK_ICON}<span>${S.sparks}</span></div>
+    <p class="note">${flash ? `<b>${esc(flash)}</b> ` : ''}Искры дают за каждую ночь, за три звезды, за ночь дня и за чистое поле. На них покупают бонусы, скины и темы.</p>
+    ${!app ? '<p class="note">Покупки за деньги работают в приложении «Светлячки» для Android. Здесь можно тратить искры, которые ты заработал в игре.</p>' : !store ? '<p class="note">Магазин Google Play пока недоступен. Проверь интернет и зайди позже. Искры, заработанные в игре, можно тратить как обычно.</p>' : ''}
+    ${specials.length ? '<h3>Особое</h3>' + specials.map(i => `<div class="shop-row hot"><b>${esc(i.name)}</b>${priceBtn(i)}<small>${esc(i.desc)}</small></div>`).join('') : ''}
+    <h3>Искры</h3>
+    <div class="packs">${PACKS.map(i => `<div class="pack">${i.tag ? `<span class="tag">${i.tag}</span>` : ''}<span class="amt">${SPARK_ICON}${i.sparks}</span><span class="pn">${esc(i.name)}</span>${priceBtn(i)}</div>`).join('')}</div>
+    ${Ads.ready ? `<div class="shop-row"><b>Видео за ${AD_SPARKS} искр</b><button class="buy" id="adSpark"${left > 0 ? '' : ' disabled'}>Смотреть</button><small>${left > 0 ? `Сегодня можно ещё ${left} раз.` : 'На сегодня всё, приходи завтра.'}</small></div>` : ''}
+    <h3>Бонусы за искры</h3>
+    ${GOODS.map((g, k) => `<div class="shop-row"><b>${g.label}</b><button class="buy" data-good="${k}">${spk(g.cost)}</button><small>${g.desc}. Сейчас: ${S[g.kind]}</small></div>`).join('')}
+    <h3>Скины и темы</h3>
+    <div class="shop-row"><b>Золото, Аврора, Космос</b><button class="buy" id="toLooks">Смотреть</button><small>Скины и темы, которых нет в обычной игре. Закрытые можно открыть раньше.</small></div>
+    ${app && store ? '<button class="btn alt" id="restore">Восстановить покупки</button>' : ''}
+    <button class="btn" id="closeShop">Закрыть</button>`, card => {
+    card.querySelectorAll('[data-good]').forEach(b => { b.onclick = () => buyGood(GOODS[+b.dataset.good]); });
+    card.querySelectorAll('[data-iap]').forEach(b => {
+      b.onclick = async () => {
+        const item = IAP.all().find(i => i.id === b.dataset.iap); b.disabled = true;
+        const r = await IAP.buy(item);
+        if (r === 'ok') { tone(784, 0, 0.15, 0.08); tone(1047, 0.1, 0.2, 0.08); tone(1319, 0.2, 0.3, 0.07); showShop(item.sparks ? `+${item.sparks} искр!` : `«${item.name}» куплено, спасибо!`); }
+        else if (r === 'pending') showShop('Оплата ещё идёт. Покупка придёт, как только Google Play её подтвердит.');
+        else if (r === 'error') showShop('Покупка не прошла. Деньги не списаны, попробуй ещё раз.');
+        else b.disabled = false;
+      };
+    });
+    const ad = card.querySelector('#adSpark');
+    if (ad) ad.onclick = async () => {
+      ad.disabled = true;
+      if (await Ads.rewarded()) {
+        const k = todayKey(); S.adSparks = { date: k, n: (S.adSparks && S.adSparks.date === k ? S.adSparks.n : 0) + 1 };
+        addSparks(AD_SPARKS); save(); showShop(`+${AD_SPARKS} искр!`);
+      } else ad.disabled = adSparksLeft() < 1;
+    };
+    card.querySelector('#toLooks').onclick = showStyle;
+    const rs = card.querySelector('#restore');
+    if (rs) rs.onclick = async () => { rs.disabled = true; await IAP.recover(); showShop('Покупки проверены.'); };
+    card.querySelector('#closeShop').onclick = closeCard;
+  });
+}
+$('sparkBtn').onclick = () => showShop();
+IAP.init();
 
 /* ---------- menu & daily night ---------- */
 const PLAY_KEYS = ['board', 'tray', 'lit', 'score', 'moves', 'streak', 'seq'];
@@ -917,12 +1130,13 @@ function showDailyOver() {
   const prev = todayBest();
   if (S.score > prev) S.dailyBest = { date: k, score: S.score };
   if (S.dailyGame) S.dailyGame.over = true;
+  const dailyGift = S.dailySpark !== k; if (dailyGift) { S.dailySpark = k; addSparks(5); }
   save(); pushScore(true);
   const myRank = dailyRows ? (dailyRows.filter(r => r.id !== UID && r.dailyBest > S.score).length + 1) : null;
   openCard(`<p class="eyebrow">Ночь дня · ${new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>
     <h2>${S.score > prev && prev > 0 ? 'Новый рекорд дня!' : 'Ночь дня окончена'}</h2>
     <p class="big-score">${S.score}</p>
-    <p>Лучший результат сегодня: ${Math.max(prev, S.score)}${myRank ? `. Сейчас ты ${myRank}-й в таблице дня.` : '.'} У всех сегодня одна и та же картинка и одинаковое начало.</p>
+    <p>Лучший результат сегодня: ${Math.max(prev, S.score)}${myRank ? `. Сейчас ты ${myRank}-й в таблице дня.` : '.'} У всех сегодня одна и та же картинка и одинаковое начало.${dailyGift ? ' За сегодняшнюю ночь дня держи 5 искр.' : ''}</p>
     <button class="btn" id="dLead">Таблица дня</button>
     <button class="btn alt" id="dAgain">Сыграть ещё раз</button>
     <button class="btn alt" id="dBack">Вернуться к ночам</button>`, card => {
@@ -938,6 +1152,7 @@ function showMenu() {
     <div class="menu">
       ${daily ? `<button class="btn" id="mBack">Вернуться к ночам (ночь ${S.level + 1})</button>`
               : `<button class="daily-btn" id="mDaily"><b>Ночь дня</b><span class="go">→</span><small>Одна картинка на всех, без бонусов. Рекорд дня: ${todayBest()}</small></button>`}
+      <button class="btn alt" id="mShop">${SPARK_ICON} Магазин · ${S.sparks} искр</button>
       <button class="btn alt" id="mLead">Таблица лидеров</button>
       <button class="btn alt" id="mStyle">Темы и скины кубов</button>
       <button class="btn alt" id="mCards">Мои открытки (${S.cards.length})</button>
@@ -947,6 +1162,7 @@ function showMenu() {
     </div>`, card => {
     const d = card.querySelector('#mDaily'); if (d) d.onclick = () => enterDaily(false);
     const bk = card.querySelector('#mBack'); if (bk) bk.onclick = exitDaily;
+    card.querySelector('#mShop').onclick = () => showShop();
     card.querySelector('#mLead').onclick = () => showLeaders(daily ? 'daily' : 'all');
     card.querySelector('#mCards').onclick = showGallery;
     card.querySelector('#mStyle').onclick = showStyle;
@@ -958,15 +1174,15 @@ function showMenu() {
 $('menuBtn').onclick = showMenu;
 function showStyle() {
   const stars = totalStars(), nights = S.cards.length;
-  openCard(`<p class="eyebrow">Звёзд: ${stars} · Ночей: ${nights}</p>
+  openCard(`<p class="eyebrow">Звёзд: ${stars} · Ночей: ${nights} · ${spk(S.sparks)}</p>
     <h2>Темы и скины</h2>
     <h3>Скины кубов</h3><div class="pick-grid" id="skinGrid"></div>
     <h3>Темы</h3><div class="pick-grid" id="themeGrid"></div>
     <button class="btn" id="closeBtn">Готово</button>`, card => {
     const sg = card.querySelector('#skinGrid'), tg = card.querySelector('#themeGrid');
     SKINS.forEach(k => {
-      const open = stars >= k.stars, b = document.createElement('button');
-      b.className = 'pick'; b.disabled = !open; b.setAttribute('aria-pressed', String(SKIN.id === k.id));
+      const open = skinOpen(k), b = document.createElement('button');
+      b.className = 'pick' + (open ? '' : ' locked'); b.setAttribute('aria-pressed', String(SKIN.id === k.id));
       const cv2 = document.createElement('canvas'); cv2.width = 180; cv2.height = 88;
       const keep = [ctx, SKIN, COLORS];
       ctx = cv2.getContext('2d'); SKIN = k; COLORS = k.colors;
@@ -974,20 +1190,26 @@ function showStyle() {
       [0, 1, 2].forEach(i => block(18 + i * 50, 19, 48, i * 2));
       [ctx, SKIN, COLORS] = keep;
       const nm = document.createElement('span'); nm.textContent = k.name;
-      const sm = document.createElement('small'); sm.textContent = open ? (SKIN.id === k.id ? 'выбран' : 'открыт') : `★ ${k.stars}`;
+      const sm = document.createElement('small');
+      if (open) sm.textContent = SKIN.id === k.id ? 'выбран' : 'открыт';
+      else sm.innerHTML = k.cost ? spk(k.cost) : `★ ${k.stars} или ${spk(skinPrice(k))}`;
       b.append(cv2, nm, sm);
-      b.onclick = () => { S.skin = k.id; save(); applyLook(); showStyle(); };
+      if (k.cost) { const pr = document.createElement('span'); pr.className = 'prem'; pr.textContent = 'МАГАЗИН'; b.appendChild(pr); }
+      b.onclick = () => { if (!open) return confirmLook('skin', k, skinPrice(k), showStyle); S.skin = k.id; save(); applyLook(); showStyle(); };
       sg.appendChild(b);
     });
     THEMES.forEach(t => {
-      const open = nights >= t.nights, b = document.createElement('button');
-      b.className = 'pick'; b.disabled = !open; b.setAttribute('aria-pressed', String(THEME.id === t.id));
+      const open = themeOpen(t), b = document.createElement('button');
+      b.className = 'pick' + (open ? '' : ' locked'); b.setAttribute('aria-pressed', String(THEME.id === t.id));
       const sw = document.createElement('span'); sw.className = 'sw';
       sw.style.background = `linear-gradient(90deg, ${t.ink} 0 40%, ${t.ink2} 40% 62%, ${t.accent} 62% 81%, ${t.ember} 81%)`;
       const nm = document.createElement('span'); nm.textContent = t.name;
-      const sm = document.createElement('small'); sm.textContent = open ? (THEME.id === t.id ? 'выбрана' : 'открыта') : `ночей: ${t.nights}`;
+      const sm = document.createElement('small');
+      if (open) sm.textContent = THEME.id === t.id ? 'выбрана' : 'открыта';
+      else sm.innerHTML = t.cost ? spk(t.cost) : `ночей: ${t.nights} или ${spk(themePrice(t))}`;
       b.append(sw, nm, sm);
-      b.onclick = () => { S.theme = t.id; save(); applyLook(); showStyle(); };
+      if (t.cost) { const pr = document.createElement('span'); pr.className = 'prem'; pr.textContent = 'МАГАЗИН'; b.appendChild(pr); }
+      b.onclick = () => { if (!open) return confirmLook('theme', t, themePrice(t), showStyle); S.theme = t.id; save(); applyLook(); showStyle(); };
       tg.appendChild(b);
     });
     card.querySelector('#closeBtn').onclick = closeCard;
@@ -1192,6 +1414,42 @@ function block(x, y, s, col, alpha = 1) {
       ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillRect(x0 + i, y0 + i, (w - i * 2) * 0.45, (w - i * 2) * 0.18);
       break;
     }
+    case 'gold': {
+      const r = s * 0.14, x0 = x + p, y0 = y + p;
+      ctx.fillStyle = 'rgba(8,9,20,0.45)'; rr(x0, y0 + d * 0.6, w, w, r); ctx.fill();
+      ctx.fillStyle = edge; rr(x0, y0, w, w, r); ctx.fill();
+      const g = ctx.createLinearGradient(x0, y0, x0 + w, y0 + w);
+      g.addColorStop(0, '#fff8d6'); g.addColorStop(0.35, face); g.addColorStop(0.7, rgba(edge, 1)); g.addColorStop(1, face);
+      ctx.fillStyle = g; rr(x0, y0, w, w - d, r); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.moveTo(x0 + w * 0.18, y0 + w * 0.12); ctx.lineTo(x0 + w * 0.42, y0 + w * 0.12); ctx.lineTo(x0 + w * 0.16, y0 + w * 0.5); ctx.lineTo(x0 + w * 0.1, y0 + w * 0.36); ctx.closePath(); ctx.fill();
+      const tw = 0.5 + 0.5 * Math.sin(time * 2.2 + (x + y) * 0.05);
+      ctx.fillStyle = `rgba(255,255,240,${0.35 + tw * 0.5})`; star4(x0 + w * 0.74, y0 + w * 0.26, s * 0.09);
+      break;
+    }
+    case 'aurora': {
+      const r = s * 0.2, x0 = x + p, y0 = y + p;
+      const g = ctx.createLinearGradient(x0, y0, x0 + w, y0 + w);
+      g.addColorStop(0, face); g.addColorStop(1, edge);
+      ctx.fillStyle = rgba(edge, 0.55); rr(x0, y0 + d * 0.5, w, w, r); ctx.fill();
+      ctx.fillStyle = g; rr(x0, y0, w, w - d * 0.5, r); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = Math.max(1, s * 0.035);
+      ctx.beginPath(); ctx.moveTo(x0 + w * 0.15, y0 + w * 0.62); ctx.bezierCurveTo(x0 + w * 0.4, y0 + w * 0.35, x0 + w * 0.6, y0 + w * 0.8, x0 + w * 0.85, y0 + w * 0.45); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.beginPath(); ctx.ellipse(x0 + w * 0.3, y0 + w * 0.22, w * 0.14, w * 0.06, -0.4, 0, 7); ctx.fill();
+      break;
+    }
+    case 'galaxy': {
+      const r = s * 0.16, x0 = x + p, y0 = y + p;
+      ctx.fillStyle = edge; rr(x0, y0, w, w, r); ctx.fill();
+      const g = ctx.createRadialGradient(x0 + w * 0.35, y0 + w * 0.4, 0, x0 + w * 0.35, y0 + w * 0.4, w * 0.75);
+      g.addColorStop(0, rgba(face, 0.95)); g.addColorStop(0.45, rgba(face, 0.35)); g.addColorStop(1, rgba(face, 0));
+      ctx.fillStyle = g; rr(x0, y0, w, w, r); ctx.fill();
+      ctx.strokeStyle = rgba(face, 0.9); ctx.lineWidth = Math.max(1, s * 0.03); rr(x0 + 0.5, y0 + 0.5, w - 1, w - 1, r); ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      const k = Math.floor(x * 7 + y * 13);
+      for (let i = 0; i < 4; i++) { const a = ((k * (i + 3) * 37) % 100) / 100, b = ((k * (i + 5) * 53) % 100) / 100; ctx.globalAlpha = alpha * (0.5 + 0.5 * Math.sin(time * 1.6 + i + k)); ctx.fillRect(x0 + w * (0.12 + a * 0.76), y0 + w * (0.12 + b * 0.76), Math.max(1, s * 0.035), Math.max(1, s * 0.035)); }
+      ctx.globalAlpha = alpha;
+      break;
+    }
     case 'pixel': {
       const q = Math.max(2, Math.round(s * 0.12));
       ctx.fillStyle = edge; ctx.fillRect(x + p, y + p, w, w);
@@ -1211,6 +1469,10 @@ function block(x, y, s, col, alpha = 1) {
     }
   }
   ctx.globalAlpha = 1;
+}
+function star4(cx, cy, r) {
+  ctx.beginPath(); ctx.moveTo(cx, cy - r); ctx.lineTo(cx + r * 0.28, cy - r * 0.28); ctx.lineTo(cx + r, cy); ctx.lineTo(cx + r * 0.28, cy + r * 0.28);
+  ctx.lineTo(cx, cy + r); ctx.lineTo(cx - r * 0.28, cy + r * 0.28); ctx.lineTo(cx - r, cy); ctx.lineTo(cx - r * 0.28, cy - r * 0.28); ctx.closePath(); ctx.fill();
 }
 function drawPiece(p, x, y, s, alpha) {
   SHAPES[p.s].cells.forEach(([r, c]) => block(x + c * s, y + r * s, s, p.c, alpha));

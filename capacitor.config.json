@@ -1,0 +1,10 @@
+{
+  "appId": "com.svetlyachki.puzzle",
+  "appName": "Светлячки",
+  "webDir": "www",
+  "android": { "backgroundColor": "#13152b" },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 600, "backgroundColor": "#13152b", "showSpinner": false },
+    "StatusBar": { "backgroundColor": "#13152b", "style": "DARK", "overlaysWebView": false }
+  }
+}

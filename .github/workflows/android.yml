@@ -1,0 +1,60 @@
+# Builds the Google Play bundle (.aab) and a test .apk in the cloud.
+# Run it from the Actions tab ("Run workflow") or by pushing a tag like v1.0.1.
+# Needs four repository secrets (Settings > Secrets and variables > Actions):
+#   KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+name: Android build
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Build the game page and copy it into the Android project
+        run: |
+          python3 scripts/build-www.py
+          python3 scripts/set-admob-app-id.py
+          npx cap sync android
+
+      - name: Restore the upload key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+
+      - name: Build .aab and .apk
+        working-directory: android
+        env:
+          SVET_KEYSTORE_PATH: ${{ runner.temp }}/upload.jks
+          SVET_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SVET_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          SVET_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 1.0.${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease assembleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: svetlyachki-${{ github.run_number }}
+          path: |
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/apk/release/app-release.apk

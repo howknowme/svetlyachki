@@ -1,0 +1,70 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../www/fonts/fonts.css">
+<style>
+html,body{margin:0;background:#13152b}
+canvas{display:block}
+</style></head><body>
+<canvas id="c"></canvas>
+<script>
+/* Draws store art. ?mode=icon|fg|feature  (icon 1024x1024, adaptive foreground 1024x1024 transparent, feature graphic 1024x500) */
+const mode = new URLSearchParams(location.search).get('mode') || 'icon';
+const c = document.getElementById('c'), g = c.getContext('2d');
+const W = mode === 'feature' ? 1024 : 1024, H = mode === 'feature' ? 500 : 1024;
+c.width = W; c.height = H;
+const INK = '#13152b', PAPER = '#efe6d2', LIME = '#d7ef5f';
+const COLORS = [['#e3b448', '#a87c22'], ['#7fae6b', '#4f7a3f'], ['#6f8fd0', '#465f9a'], ['#d9785a', '#9c4b33'], ['#a873b8', '#734a82'], ['#4fb0a5', '#2f7a72']];
+function rr(x, y, w, h, r) { g.beginPath(); g.roundRect(x, y, w, h, r); }
+function block(x, y, s, col) {
+  const [face, edge] = COLORS[col]; const p = s * 0.05, w = s - p * 2, d = s * 0.09, r = s * 0.12;
+  g.fillStyle = 'rgba(8,9,20,0.45)'; rr(x + p, y + p + d * 0.6, w, w, r); g.fill();
+  g.fillStyle = edge; rr(x + p, y + p, w, w, r); g.fill();
+  g.fillStyle = face; rr(x + p, y + p, w, w - d, r); g.fill();
+  g.fillStyle = 'rgba(255,248,232,0.28)'; g.fillRect(x + p + r, y + p + s * 0.07, w - r * 2, s * 0.035);
+  g.fillStyle = 'rgba(19,21,43,0.22)'; g.beginPath(); g.arc(x + s * 0.5, y + s * 0.47, s * 0.07, 0, 7); g.fill();
+}
+function glow(x, y, r, a) {
+  const gr = g.createRadialGradient(x, y, 0, x, y, r);
+  gr.addColorStop(0, `rgba(255,255,220,${a})`); gr.addColorStop(0.2, `rgba(215,239,95,${a * 0.8})`); gr.addColorStop(1, 'rgba(215,239,95,0)');
+  g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
+}
+function firefly(cx, cy, s) {
+  glow(cx, cy + s * 0.35, s * 1.6, 0.75);
+  g.fillStyle = 'rgba(239,230,210,0.8)';
+  g.beginPath(); g.ellipse(cx - s * 0.42, cy - s * 0.25, s * 0.42, s * 0.2, -0.6, 0, 7); g.fill();
+  g.beginPath(); g.ellipse(cx + s * 0.42, cy - s * 0.25, s * 0.42, s * 0.2, 0.6, 0, 7); g.fill();
+  g.fillStyle = LIME; g.beginPath(); g.ellipse(cx, cy + s * 0.32, s * 0.26, s * 0.34, 0, 0, 7); g.fill();
+  g.fillStyle = PAPER; g.beginPath(); g.ellipse(cx, cy - s * 0.12, s * 0.22, s * 0.26, 0, 0, 7); g.fill();
+  g.strokeStyle = PAPER; g.lineWidth = s * 0.06; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(cx - s * 0.08, cy - s * 0.35); g.lineTo(cx - s * 0.26, cy - s * 0.66); g.moveTo(cx + s * 0.08, cy - s * 0.35); g.lineTo(cx + s * 0.26, cy - s * 0.66); g.stroke();
+}
+function sky(w, h) {
+  const gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, '#13152b'); gr.addColorStop(0.7, '#262a52'); gr.addColorStop(1, '#3b2f62');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(255,255,255,${0.25 + rnd() * 0.6})`; g.beginPath(); g.arc(rnd() * w, rnd() * h * 0.7, 1 + rnd() * 2.2, 0, 7); g.fill(); }
+}
+Promise.all([document.fonts.load('900 86px Unbounded', 'СВЕТЛЯЧКИ'), document.fonts.load('600 34px "Golos Text"', 'Зажги'), document.fonts.load('500 26px "Golos Text"', 'Честный')]).catch(() => {}).then(() => {
+  if (mode === 'icon' || mode === 'fg') {
+    if (mode === 'icon') sky(W, H);
+    // adaptive icons keep the middle 66%: draw inside it
+    const s = 150, ox = 512 - s * 1.5, oy = 600;
+    [[0, 0, 0], [1, 0, 3], [2, 0, 1], [0, 1, 2], [1, 1, 5], [2, 1, 4]].forEach(([cx, cy, col]) => block(ox + cx * s, oy + cy * s * 0.0 + (cy ? s : 0), s, col));
+    firefly(512, 400, 170);
+  } else {
+    sky(W, H);
+    const s = 74;
+    for (let r = 0; r < 4; r++) for (let k = 0; k < 6; k++) if ((r * 7 + k * 3) % 5) block(612 + k * s, 120 + r * s, s, (r + k) % 6);
+    firefly(560, 110, 70);
+    glow(860, 90, 120, 0.4);
+    g.fillStyle = PAPER; g.font = '900 86px Unbounded'; g.textBaseline = 'alphabetic';
+    g.fillText('СВЕТЛЯЧКИ', 56, 250);
+    g.fillStyle = LIME; g.font = '600 34px "Golos Text"';
+    g.fillText('Зажги ночь, линия за линией', 60, 310);
+    g.fillStyle = 'rgba(239,230,210,0.75)'; g.font = '500 26px "Golos Text"';
+    g.fillText('Честный блок-пазл для всех возрастов', 60, 360);
+  }
+  document.title = 'done';
+});
+</script></body></html>

@@ -1,0 +1,1406 @@
+<meta charset="utf-8">
+<title>Светлячки</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#13152b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Golos+Text:wght@500;600;800&display=swap">
+<style>
+/* Layout: a paper-cut night. Ink-blue ground with grain, a postcard picture on top, the board as a dark printed panel,
+   cream paper for every card and button. One accent: firefly lime. Single deliberate dark world, no light theme. */
+:root {
+  --ink: #13152b;        /* page ground */
+  --ink-2: #1c1f3d;      /* panels */
+  --ink-3: #262a52;      /* empty slots, outlines */
+  --paper: #efe6d2;      /* text on dark, card ground */
+  --paper-2: #d9ceb6;    /* paper shade */
+  --dim: #8d8fb5;        /* secondary text on dark */
+  --lime: #d7ef5f;       /* fireflies, the single accent */
+  --ember: #f08a4b;      /* bombs and streaks */
+  --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --body: "Golos Text", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background-color: var(--ink);
+  background-image: var(--grain, none);
+  color: var(--paper);
+  font-family: var(--body);
+  overflow: hidden;
+  -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.app {
+  height: 100%;
+  display: flex; flex-direction: column; gap: 6px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 10px 8px;
+  box-sizing: border-box;
+}
+header, .bar { width: 100%; max-width: 520px; margin: 0 auto; }
+header { display: flex; align-items: center; gap: 12px; }
+.logo { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.logo svg { flex: none; }
+.logo-text { min-width: 0; }
+.logo h1 {
+  font-family: var(--display); font-weight: 900; font-size: 1.05rem; margin: 0; line-height: 1;
+  letter-spacing: 0.02em; text-transform: uppercase; color: var(--paper);
+}
+.logo span { display: block; margin-top: 4px; font-size: 0.78rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat { text-align: right; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat b { display: block; font-family: var(--display); font-weight: 700; font-size: 0.95rem; }
+.stat b.lit { color: var(--lime); }
+.stat small { color: var(--dim); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.stage { flex: 1; position: relative; min-height: 0; }
+#cv { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+.bar { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 40px; gap: 6px; }
+.chip {
+  font: 800 0.82rem var(--body); color: var(--ink); cursor: pointer;
+  background: var(--paper); border: 0; border-radius: 10px;
+  box-shadow: 0 3px 0 var(--paper-2), 0 3px 0 2px rgba(0,0,0,0.35);
+  padding: 9px 6px; min-height: 40px; min-width: 0; white-space: nowrap;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  transition: transform 0.08s;
+}
+.chip:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--paper-2); }
+.chip svg { flex: none; }
+.chip .n { font-family: var(--display); font-size: 0.72rem; background: var(--ink); color: var(--paper); border-radius: 6px; padding: 2px 6px; font-variant-numeric: tabular-nums; }
+.chip.sq { width: 40px; padding: 0; }
+.chip.off { opacity: 0.45; }
+.chip:disabled { opacity: 0.35; cursor: default; }
+.chip.armed { background: var(--ember); box-shadow: 0 3px 0 #b85a26; }
+.chip:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
+
+/* postcards (all dialogs) */
+.overlay {
+  position: fixed; inset: 0; z-index: 20;
+  background: rgba(10, 11, 26, 0.72);
+  display: grid; place-items: center;
+  padding-block: 16px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.card {
+  width: 100%; max-width: 380px; max-height: 86vh; overflow: auto; box-sizing: border-box;
+  background: var(--paper); background-image: var(--grain, none); color: var(--ink);
+  border-radius: 6px; padding: 22px 20px 20px; text-align: left;
+  box-shadow: 0 0 0 6px var(--paper), 0 0 0 7px #b9ad93, 0 24px 60px rgba(0,0,0,0.55);
+  transform: rotate(-0.6deg);
+}
+.card .eyebrow { font: 800 0.68rem var(--body); letter-spacing: 0.16em; text-transform: uppercase; color: #8a7f68; margin: 0 0 6px; }
+.card h2 { font-family: var(--display); font-weight: 900; font-size: 1.3rem; line-height: 1.15; margin: 0 0 12px; text-wrap: balance; }
+.card p { margin: 0 0 14px; line-height: 1.5; font-size: 0.97rem; color: #3a3a52; }
+.card canvas.pc { width: 100%; height: auto; display: block; margin: 2px 0 14px; border: 5px solid #fff8e8; box-shadow: 0 2px 0 #b9ad93; transform: rotate(0.8deg); }
+.btn {
+  font: 800 1rem var(--body); color: var(--paper); cursor: pointer; width: 100%;
+  background: var(--ink); border: 0; border-radius: 10px; padding: 13px 18px;
+  box-shadow: 0 3px 0 #000; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn + .btn { margin-top: 10px; }
+.btn.alt { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+.btn:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
+.btn:disabled { opacity: 0.4; }
+.how { display: grid; gap: 10px; margin: 0 0 18px; padding: 0; list-style: none; counter-reset: how; }
+.how li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; line-height: 1.4; color: #3a3a52; }
+.how li::before { counter-increment: how; content: counter(how); font: 900 0.8rem var(--display); background: var(--ink); color: var(--lime); border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; }
+.stars { display: flex; gap: 6px; margin: 0 0 10px; }
+.stars svg { width: 34px; height: 34px; }
+.gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.gallery figure { margin: 0; min-width: 0; }
+.gallery canvas { width: 100%; height: auto; display: block; border: 3px solid #fff8e8; box-shadow: 0 2px 0 #b9ad93; }
+.gallery figcaption { font-size: 0.74rem; color: #5a5670; margin-top: 4px; }
+.gallery figcaption b { color: #b8860b; letter-spacing: 0.05em; }
+.empty { color: #6a6680; font-size: 0.92rem; }
+.field { display: grid; gap: 6px; margin: 0 0 14px; }
+.field label { font: 800 0.75rem var(--body); letter-spacing: 0.1em; text-transform: uppercase; color: #6a6680; }
+.field input {
+  font: 700 1.1rem var(--body); color: var(--ink); background: #fff8e8; border: 2px solid var(--ink); border-radius: 10px;
+  padding: 10px 12px; width: 100%; box-sizing: border-box; -webkit-user-select: text; user-select: text;
+}
+.field input:focus { outline: 3px solid var(--lime); outline-offset: 1px; }
+.err { color: #b3361e; font-size: 0.85rem; min-height: 1.2em; margin: -6px 0 10px; }
+.board-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
+.board-list li { display: grid; grid-template-columns: 30px 1fr auto auto; gap: 10px; align-items: center; padding: 8px 6px; border-bottom: 1px dashed #c9bda2; }
+.board-list li .rk { font: 900 0.85rem var(--display); color: #8a7f68; text-align: center; }
+.board-list li:nth-child(1) .rk { color: #b8860b; }
+.board-list li .nk { font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-list li .nt { font-size: 0.75rem; color: #6a6680; }
+.board-list li .sc { font: 700 0.9rem var(--display); }
+.board-list li.me { background: #e4f3a0; border-radius: 8px; border-bottom-color: transparent; }
+.note { font-size: 0.8rem; color: #6a6680; margin: 0 0 14px; }
+.pick-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; }
+.pick { border: 2px solid transparent; border-radius: 10px; background: #fff8e8; padding: 6px 6px 8px; cursor: pointer; font: 700 0.72rem var(--body); color: #13152b; display: grid; gap: 5px; justify-items: center; text-align: center; min-width: 0; }
+.pick canvas, .pick .sw { width: 100%; height: 44px; border-radius: 6px; display: block; }
+.pick[aria-pressed="true"] { border-color: #13152b; box-shadow: 0 3px 0 #13152b; }
+.pick:disabled { cursor: default; opacity: 0.55; }
+.pick small { font-weight: 600; color: #6a6680; font-size: 0.66rem; }
+.card h3 { font: 800 0.75rem var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: #8a7f68; margin: 4px 0 8px; }
+.overlay.low { align-items: end; background: rgba(10, 11, 26, 0.35); }
+.menu { display: grid; gap: 10px; }
+.daily-btn { text-align: left; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; background: var(--ink); color: var(--paper); border: 0; border-radius: 10px; padding: 14px 16px; cursor: pointer; box-shadow: 0 3px 0 #000; font: inherit; }
+.daily-btn b { font: 900 1rem var(--display); color: var(--lime); }
+.daily-btn small { grid-column: 1; color: var(--dim); font-size: 0.8rem; }
+.daily-btn span.go { grid-row: 1 / span 2; grid-column: 2; font: 900 1.4rem var(--display); color: var(--lime); }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 12px; }
+.tab { font: 800 0.85rem var(--body); padding: 8px; border-radius: 8px; border: 2px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--lime); }
+.card .big-score { font: 900 2.6rem var(--display); margin: 0 0 4px; font-variant-numeric: tabular-nums; }
+.rank-badge { display: inline-block; background: var(--ink); color: var(--lime); font: 800 0.78rem var(--body); letter-spacing: 0.06em; padding: 5px 10px; border-radius: 99px; margin: 0 0 12px; }
+@media (max-width: 380px) { .chip:not(.sq) svg { display: none; } .chip { font-size: 0.78rem; gap: 4px; } }
+@media (prefers-reduced-motion: reduce) { .card { transform: none; } .chip { transition: none; } }
+</style>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <circle cx="17" cy="21" r="12" fill="#d7ef5f" opacity="0.18"/>
+        <circle cx="17" cy="21" r="7" fill="#d7ef5f" opacity="0.35"/>
+        <ellipse cx="17" cy="21" rx="4" ry="5" fill="#d7ef5f"/>
+        <ellipse cx="17" cy="13" rx="3.6" ry="4.4" fill="#efe6d2"/>
+        <path d="M13.6 12.5 C8 6, 4 9, 7 13.5 C9 16, 12 15, 14 14Z M20.4 12.5 C26 6, 30 9, 27 13.5 C25 16, 22 15, 20 14Z" fill="#efe6d2" opacity="0.75"/>
+        <path d="M15.5 9 L13 4.5 M18.5 9 L21 4.5" stroke="#efe6d2" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <div class="logo-text">
+        <h1>Светлячки</h1>
+        <span id="levelName">Ночь 1 · Лесная поляна</span>
+      </div>
+    </div>
+    <div class="stat"><small>Свет</small><b class="lit" id="lightStat">0/5</b></div>
+    <div class="stat"><small>Очки</small><b id="scoreStat">0</b></div>
+  </header>
+  <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+  <div class="bar">
+    <button class="chip" id="bombBtn" title="Бомба убирает квадрат 3×3">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="8" cy="10.5" r="6" fill="currentColor"/><path d="M11.5 5.5 L13.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14.5 1.5 l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="#f08a4b"/></svg>
+      Бомба <span class="n" id="bombN">1</span>
+    </button>
+    <button class="chip" id="shuffleBtn" title="Дать другие фигурки">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h9l-2.5-2.5M16 13H7l2.5 2.5"/><path d="M11 5c3 0 5 1.5 5 4M7 13c-3 0-5-1.5-5-4"/></svg>
+      Сменить <span class="n" id="shuffleN">1</span>
+    </button>
+    <button class="chip" id="undoBtn" title="Отменить последний ход">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4L2.5 7.5 6 11"/><path d="M3 7.5h7.5a4.5 4.5 0 010 9H8"/></svg>
+      Отмена <span class="n" id="undoN">1</span>
+    </button>
+    <button class="chip sq" id="menuBtn" aria-label="Меню" title="Меню: Ночь дня, лидеры, открытки, звук">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor"><rect x="3" y="4" width="14" height="2.4" rx="1.2"/><rect x="3" y="8.8" width="14" height="2.4" rx="1.2"/><rect x="3" y="13.6" width="14" height="2.4" rx="1.2"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden><div class="card" id="card" role="dialog" aria-modal="true"></div></div>
+
+<script>
+(() => {
+'use strict';
+const N = 8;
+const STORE = 'svetlyachki-v1';
+const cv = document.getElementById('cv');
+let ctx = cv.getContext('2d');
+const stage = document.getElementById('stage');
+const $ = id => document.getElementById(id);
+
+/* ---------- pieces ---------- */
+const SHAPE_SRC = ['X','XX','X/X','XXX','X/X/X','XXXX','X/X/X/X','XXXXX','X/X/X/X/X','XX/XX','XXX/XXX/XXX',
+  'X./XX','.X/XX','XX/X.','XX/.X','X../X../XXX','..X/..X/XXX','XXX/X../X..','XXX/..X/..X',
+  'XXX/.X.','.X./XXX','X./XX/X.','.X/XX/.X','XX./.XX','.XX/XX.','X./XX/.X','.X/XX/X.','XX/XX/XX','XXX/XXX'];
+const SHAPES = SHAPE_SRC.map(s => {
+  const rows = s.split('/'); const cells = [];
+  rows.forEach((row, r) => [...row].forEach((ch, c) => { if (ch === 'X') cells.push([r, c]); }));
+  return { cells, h: rows.length, w: rows[0].length };
+});
+// every piece can be turned: find (or add) the clockwise rotation of each shape
+const shapeKey = cells => cells.map(([r, c]) => r + ':' + c).sort().join(',');
+const ROT = [];
+for (let i = 0; i < SHAPES.length; i++) {
+  const sh = SHAPES[i];
+  const cells = sh.cells.map(([r, c]) => [c, sh.h - 1 - r]);
+  const key = shapeKey(cells);
+  let j = SHAPES.findIndex(x => shapeKey(x.cells) === key);
+  if (j < 0) { SHAPES.push({ cells, h: sh.w, w: sh.h }); j = SHAPES.length - 1; }
+  ROT[i] = j;
+}
+const BASE_SHAPES = SHAPE_SRC.length;
+/* Block skins: each has six colours [face, edge] and its own way of drawing a tile.
+   Unlocked by the total number of stars. */
+const SKINS = [
+  { id: 'paper', name: 'Бумага', stars: 0, style: 'paper', colors: [['#e3b448', '#a87c22'], ['#7fae6b', '#4f7a3f'], ['#6f8fd0', '#465f9a'], ['#d9785a', '#9c4b33'], ['#a873b8', '#734a82'], ['#4fb0a5', '#2f7a72']] },
+  { id: 'candy', name: 'Леденцы', stars: 5, style: 'candy', colors: [['#ff5d8f', '#c22a5c'], ['#ffd23f', '#d19a00'], ['#3bceac', '#16927a'], ['#4d9de0', '#2366a8'], ['#b36bff', '#7a35cc'], ['#ff8c42', '#cc5a12']] },
+  { id: 'wood', name: 'Дерево', stars: 10, style: 'wood', colors: [['#c8935a', '#8a5a2b'], ['#a8744a', '#6e4423'], ['#d9b07a', '#9c7442'], ['#8f5f3a', '#5a3519'], ['#b98a5e', '#7a5330'], ['#e0bf8f', '#a8875a']] },
+  { id: 'lantern', name: 'Фонарики', stars: 16, style: 'lantern', colors: [['#ffd36b', '#3a2a10'], ['#b6ff6b', '#1f3510'], ['#6bd8ff', '#10283a'], ['#ff8a6b', '#3a1810'], ['#e08aff', '#2c1038'], ['#6bffd2', '#103a30']] },
+  { id: 'gem', name: 'Самоцветы', stars: 24, style: 'gem', colors: [['#ff4d6d', '#9d0b2c'], ['#4dd8ff', '#0b6d9d'], ['#7dff4d', '#2c9d0b'], ['#ffd24d', '#9d760b'], ['#b84dff', '#5c0b9d'], ['#ff8f4d', '#9d3c0b']] },
+  { id: 'pixel', name: 'Пиксели', stars: 32, style: 'pixel', colors: [['#f7d51d', '#b08f00'], ['#e03c28', '#8f1a0d'], ['#3cb371', '#1d6b3f'], ['#2b7de9', '#14479a'], ['#9b5de5', '#5a2b9c'], ['#f15bb5', '#a1236f']] }
+];
+/* Themes recolour the whole game. Unlocked by nights finished. */
+const THEMES = [
+  { id: 'paper', name: 'Бумажная ночь', nights: 0, ink: '#13152b', ink2: '#1c1f3d', ink3: '#262a52', paper: '#efe6d2', paper2: '#d9ceb6', dim: '#8d8fb5', accent: '#d7ef5f', ember: '#f08a4b' },
+  { id: 'winter', name: 'Зимняя ночь', nights: 2, ink: '#0d1a2b', ink2: '#16293f', ink3: '#22395a', paper: '#eaf3f8', paper2: '#c6d8e3', dim: '#8aa6c2', accent: '#9fe8ff', ember: '#ff8fa3' },
+  { id: 'autumn', name: 'Осенний лес', nights: 4, ink: '#1c130f', ink2: '#2a1d16', ink3: '#3d2a1f', paper: '#f3e3cc', paper2: '#dcc6a6', dim: '#b0957c', accent: '#ffb347', ember: '#e8573a' },
+  { id: 'sakura', name: 'Сакура', nights: 7, ink: '#1c1124', ink2: '#2a1a36', ink3: '#3d2650', paper: '#f8e9ef', paper2: '#e3c9d4', dim: '#b495b8', accent: '#ffb7d5', ember: '#ff7aa0' },
+  { id: 'neon', name: 'Неоновый город', nights: 10, ink: '#07070d', ink2: '#12121f', ink3: '#1f1f36', paper: '#e9e9ff', paper2: '#c4c4e6', dim: '#8484b8', accent: '#39ffb0', ember: '#ff3df2' },
+  { id: 'dawn', name: 'Рассвет', nights: 15, ink: '#2a1f3d', ink2: '#3a2b52', ink3: '#4e3b6b', paper: '#fff1e0', paper2: '#ecd5bb', dim: '#b9a3c9', accent: '#ffd166', ember: '#ff6b6b' }
+];
+let SKIN = SKINS[0], THEME = THEMES[0], COLORS = SKIN.colors;
+const totalStars = () => Object.values(S.stars || {}).reduce((a, b) => a + b, 0);
+function applyLook() {
+  SKIN = SKINS.find(k => k.id === S.skin && totalStars() >= k.stars) || SKINS[0];
+  THEME = THEMES.find(t => t.id === S.theme && (S.cards || []).length >= t.nights) || THEMES[0];
+  COLORS = SKIN.colors;
+  const st = document.documentElement.style;
+  [['--ink', 'ink'], ['--ink-2', 'ink2'], ['--ink-3', 'ink3'], ['--paper', 'paper'], ['--paper-2', 'paper2'], ['--dim', 'dim'], ['--lime', 'accent'], ['--ember', 'ember']].forEach(([v, k]) => st.setProperty(v, THEME[k]));
+  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = THEME.ink;
+}
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+
+/* ---------- levels ---------- */
+const TYPES = [
+  ['forest', 'Лесная поляна'], ['lake', 'Тихое озеро'], ['village', 'Деревня у холма'],
+  ['mountains', 'Горный перевал'], ['city', 'Ночной город'], ['garden', 'Сад с фонариками']
+];
+const needFor = L => Math.min(5 + L, 14);
+function levelInfo(L) {
+  const [type, name] = TYPES[L % TYPES.length];
+  const round = Math.floor(L / TYPES.length);
+  const roman = ['', ' II', ' III', ' IV', ' V', ' VI', ' VII', ' VIII'][round] ?? ' ' + (round + 1);
+  return { type, name: name + roman, seed: L * 7919 + 13, need: needFor(L), hue: (round * 37) % 360 };
+}
+function todayKey() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function hashStr(t) { let h = 2166136261; for (const ch of t) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function dailyInfo() {
+  const k = todayKey(), h = hashStr(k);
+  const [type] = TYPES[h % TYPES.length];
+  return { type, name: 'Ночь дня', seed: h % 100000 + 7, need: 12, hue: h % 360, endless: true, daily: k };
+}
+function curInfo() { return S.mode === 'daily' ? dailyInfo() : levelInfo(S.level); }
+const RANKS = [[0, 'Новичок'], [3, 'Ловец светлячков'], [6, 'Фонарщик'], [12, 'Хранитель ночи'], [24, 'Звездочёт'], [48, 'Повелитель звёзд']];
+const rankFor = n => RANKS.filter(([k]) => n >= k).pop()[1];
+function rngFrom(seed) {
+  let s = seed >>> 0 || 1;
+  return () => { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
+}
+
+/* ---------- state ---------- */
+let S = load() || freshState();
+function freshState() {
+  return { level: 0, score: 0, best: 0, lit: 0, board: emptyBoard(), tray: [null, null, null], cards: [], sound: true, seenHelp: false };
+}
+// fields added in the big update; fill them in for older saves too
+S = Object.assign({ bombs: 1, shuffles: 1, streak: 0, moves: 0, lines: 0, stars: {}, music: true, rotates: 3, undos: 1, mode: 'night', seq: 0, dailyBest: null, skin: 'paper', theme: 'paper', nightsSinceAd: 0 }, S);
+applyLook();
+function emptyBoard() { return Array.from({ length: N }, () => Array(N).fill(-1)); }
+function load() {
+  try { const v = JSON.parse(localStorage.getItem(STORE)); if (v && v.board && v.board.length === N) return v; } catch (e) {}
+  return null;
+}
+function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} }
+
+function makePiece(rng = Math.random) {
+  // early nights favour smaller pieces
+  const big = S.mode === 'daily' ? 0.3 : Math.min(0.12 + S.level * 0.03, 0.35);
+  let idx;
+  do { idx = Math.floor(rng() * BASE_SHAPES); } while (SHAPES[idx].cells.length >= 6 && rng() > big);
+  if (rng() < 0.5) idx = ROT[idx];
+  return { s: idx, c: Math.floor(rng() * COLORS.length) };
+}
+/* Fair pieces: every set of three can be placed in full, in some order.
+   A small search on a copy of the board checks it before the set is dealt. */
+function flatBoard() { const b = new Int8Array(N * N); for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) b[r * N + c] = S.board[r][c] === -1 ? 0 : 1; return b; }
+function fitsOn(b, sh, r0, c0) {
+  for (const [r, c] of sh.cells) { const R = r0 + r, C = c0 + c; if (R >= N || C >= N || b[R * N + C]) return false; }
+  return true;
+}
+function placeOn(b, sh, r0, c0) {
+  const nb = b.slice();
+  for (const [r, c] of sh.cells) nb[(r0 + r) * N + c0 + c] = 1;
+  const fr = [], fc = [];
+  for (let r = 0; r < N; r++) { let f = true; for (let c = 0; c < N; c++) if (!nb[r * N + c]) { f = false; break; } if (f) fr.push(r); }
+  for (let c = 0; c < N; c++) { let f = true; for (let r = 0; r < N; r++) if (!nb[r * N + c]) { f = false; break; } if (f) fc.push(c); }
+  fr.forEach(r => { for (let c = 0; c < N; c++) nb[r * N + c] = 0; });
+  fc.forEach(c => { for (let r = 0; r < N; r++) nb[r * N + c] = 0; });
+  return nb;
+}
+function solvable(pieces, b, budget) {
+  if (!pieces.length) return true;
+  for (let i = 0; i < pieces.length; i++) {
+    const sh = SHAPES[pieces[i].s], rest = pieces.filter((_, k) => k !== i);
+    for (let r = 0; r <= N - sh.h; r++) for (let c = 0; c <= N - sh.w; c++) {
+      if (!fitsOn(b, sh, r, c)) continue;
+      if (--budget.n < 0) return true; // search too long: the set is almost surely fine
+      if (solvable(rest, placeOn(b, sh, r, c), budget)) return true;
+    }
+  }
+  return false;
+}
+function newTray() {
+  const rng = S.mode === 'daily' ? rngFrom(hashStr(todayKey()) + (S.seq++) * 977) : Math.random;
+  const b = flatBoard();
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const t = [makePiece(rng), makePiece(rng), makePiece(rng)];
+    if (solvable(t, b, { n: 6000 })) { S.tray = t; return; }
+  }
+  // the board is very full: deal small pieces that still fit
+  const small = [0, 1, 2, 3, 4].map(k => ({ s: k, c: Math.floor(rng() * COLORS.length) }));
+  S.tray = [small[0], small[1], small[2]];
+}
+function canPlace(p, r0, c0) {
+  const sh = SHAPES[p.s];
+  for (const [r, c] of sh.cells) {
+    const R = r0 + r, C = c0 + c;
+    if (R < 0 || C < 0 || R >= N || C >= N || S.board[R][C] !== -1) return false;
+  }
+  return true;
+}
+function anyFits(p) {
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (canPlace(p, r, c)) return true;
+  return false;
+}
+
+/* ---------- geometry ---------- */
+let W = 0, H = 0, DPR = 1, G = {};
+function layout() {
+  const r = stage.getBoundingClientRect();
+  W = r.width; H = r.height; DPR = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  let bw = Math.min(W, 520);
+  let sh = bw * 0.48, th = bw / N * 2.9, gap = 12;
+  const total = sh + bw + th + gap * 2;
+  if (total > H) { const k = H / total; bw *= k; sh *= k; th *= k; }
+  const used = sh + bw + th + gap * 2;
+  const x = (W - bw) / 2; let y = Math.max(0, (H - used) / 2);
+  G = { x, bw, cell: bw / N, sceneY: y, sceneH: sh, boardY: y + sh + gap, trayY: y + sh + gap + bw + gap, trayH: th };
+  buildScene();
+}
+
+/* ---------- night pictures ---------- */
+let sceneColor, sceneDark, sceneMask, spots = [];
+function buildScene() {
+  const info = curInfo();
+  const w = Math.max(2, Math.round(G.bw * DPR)), h = Math.max(2, Math.round(G.sceneH * DPR));
+  sceneColor = drawScene(info, w, h);
+  sceneDark = document.createElement('canvas'); sceneDark.width = w; sceneDark.height = h;
+  const d = sceneDark.getContext('2d');
+  d.drawImage(sceneColor, 0, 0);
+  d.fillStyle = 'rgba(4,7,22,0.84)'; d.fillRect(0, 0, w, h);
+  sceneMask = document.createElement('canvas'); sceneMask.width = w; sceneMask.height = h;
+  // light spots, spread over the picture
+  const rng = rngFrom(info.seed + 99);
+  const n = info.need;
+  const cols = Math.ceil(Math.sqrt(n * 2.1)), rows = Math.ceil(n / cols);
+  const cellsList = [];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cellsList.push([r, c]);
+  for (let i = cellsList.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [cellsList[i], cellsList[j]] = [cellsList[j], cellsList[i]]; }
+  const prev = spots;
+  spots = cellsList.slice(0, n).map(([r, c], i) => ({
+    x: (c + 0.2 + rng() * 0.6) / cols, y: (r + 0.2 + rng() * 0.6) / rows,
+    glow: i < S.lit ? 1 : (prev[i] ? prev[i].glow : 0), on: i < S.lit, ph: rng() * 6.28
+  }));
+}
+function drawScene(info, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  const rng = rngFrom(info.seed);
+  const hue = info.hue;
+  const hs = (H0, s, l, a = 1) => `hsla(${(H0 + hue) % 360},${s}%,${l}%,${a})`;
+  // sky
+  const sky = g.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, hs(232, 62, 18)); sky.addColorStop(0.55, hs(262, 52, 34)); sky.addColorStop(1, hs(318, 55, 52));
+  g.fillStyle = sky; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 70; i++) {
+    g.fillStyle = `rgba(255,255,255,${0.3 + rng() * 0.7})`;
+    const r = rng() * 1.4 * DPR + 0.4; g.beginPath(); g.arc(rng() * w, rng() * h * 0.55, r, 0, 7); g.fill();
+  }
+  // moon
+  const mx = w * (0.15 + rng() * 0.7), my = h * (0.16 + rng() * 0.12), mr = h * 0.09;
+  const halo = g.createRadialGradient(mx, my, mr * 0.5, mx, my, mr * 4);
+  halo.addColorStop(0, 'rgba(255,240,190,0.45)'); halo.addColorStop(1, 'rgba(255,240,190,0)');
+  g.fillStyle = halo; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#fff3c4'; g.beginPath(); g.arc(mx, my, mr, 0, 7); g.fill();
+
+  const hill = (base, amp, color, seedOff) => {
+    g.fillStyle = color; g.beginPath(); g.moveTo(0, h);
+    const f1 = 1 + rng() * 2, f2 = 3 + rng() * 3, p = rng() * 6;
+    for (let x = 0; x <= w; x += w / 60) g.lineTo(x, h * base - Math.sin(x / w * f1 * 3.14 + p) * h * amp - Math.sin(x / w * f2 * 3.14 + seedOff) * h * amp * 0.35);
+    g.lineTo(w, h); g.fill();
+  };
+  const pine = (x, y, s, color) => {
+    g.fillStyle = color;
+    for (let k = 0; k < 3; k++) {
+      g.beginPath(); g.moveTo(x, y - s * (1 - k * 0.28)); g.lineTo(x - s * (0.32 + k * 0.08), y - s * (0.45 - k * 0.22)); g.lineTo(x + s * (0.32 + k * 0.08), y - s * (0.45 - k * 0.22)); g.fill();
+    }
+    g.fillRect(x - s * 0.05, y - s * 0.25, s * 0.1, s * 0.25);
+  };
+  const house = (x, y, s, wall, roof) => {
+    g.fillStyle = wall; g.fillRect(x, y - s, s * 1.2, s);
+    g.fillStyle = roof; g.beginPath(); g.moveTo(x - s * 0.12, y - s); g.lineTo(x + s * 0.6, y - s * 1.6); g.lineTo(x + s * 1.32, y - s); g.fill();
+    g.fillStyle = '#ffd56b'; g.fillRect(x + s * 0.2, y - s * 0.7, s * 0.3, s * 0.3); g.fillRect(x + s * 0.72, y - s * 0.7, s * 0.3, s * 0.3);
+    g.fillStyle = hs(20, 45, 28); g.fillRect(x + s * 0.48, y - s * 0.38, s * 0.24, s * 0.38);
+  };
+
+  if (info.type === 'forest') {
+    hill(0.62, 0.06, hs(170, 40, 26), 1);
+    for (let i = 0; i < 14; i++) pine(rng() * w, h * (0.62 + rng() * 0.06), h * (0.28 + rng() * 0.1), hs(160, 45, 20));
+    hill(0.82, 0.04, hs(130, 45, 30), 2);
+    for (let i = 0; i < 10; i++) pine(rng() * w, h * (0.86 + rng() * 0.05), h * (0.34 + rng() * 0.14), hs(150, 50, 15));
+    for (let i = 0; i < 6; i++) { const x = rng() * w, y = h * (0.9 + rng() * 0.08), s = h * 0.035;
+      g.fillStyle = '#f4ece0'; g.fillRect(x - s * 0.2, y - s, s * 0.4, s);
+      g.fillStyle = '#e8473f'; g.beginPath(); g.arc(x, y - s, s * 0.7, 3.14, 0); g.fill(); }
+  } else if (info.type === 'lake') {
+    hill(0.55, 0.08, hs(220, 35, 30), 1);
+    hill(0.6, 0.05, hs(180, 38, 24), 3);
+    const wy = h * 0.62;
+    const water = g.createLinearGradient(0, wy, 0, h);
+    water.addColorStop(0, hs(250, 50, 42)); water.addColorStop(1, hs(225, 60, 18));
+    g.fillStyle = water; g.fillRect(0, wy, w, h - wy);
+    g.fillStyle = 'rgba(255,243,196,0.7)';
+    for (let i = 0; i < 9; i++) { const ww = mr * (2.2 - i * 0.18) * (0.6 + rng() * 0.5); g.fillRect(mx - ww / 2, wy + 6 + i * h * 0.04, ww, h * 0.012); }
+    g.fillStyle = hs(140, 40, 18);
+    for (let i = 0; i < 26; i++) { const x = rng() * w * 0.3 + (rng() > 0.5 ? w * 0.7 : 0); g.fillRect(x, h * 0.8, w * 0.004 + 1, h * 0.2 * (0.5 + rng())); }
+    g.fillStyle = '#f2f6ff'; g.beginPath(); g.ellipse(w * (0.3 + rng() * 0.4), h * 0.78, w * 0.03, h * 0.03, 0, 0, 7); g.fill();
+  } else if (info.type === 'village') {
+    hill(0.6, 0.08, hs(150, 35, 28), 1);
+    const walls = ['#f2c7a5', '#e9d8b4', '#c9e0e8', '#f0b7b7'], roofs = ['#b8442f', '#6a4ca8', '#2f7a8a', '#9a5a2a'];
+    for (let i = 0; i < 6; i++) { const s = h * (0.12 + rng() * 0.05); house(w * (0.04 + i * 0.16 + rng() * 0.04), h * (0.74 + rng() * 0.08), s, walls[i % 4], roofs[(i + 1) % 4]); }
+    hill(0.95, 0.03, hs(120, 40, 22), 4);
+    for (let i = 0; i < 5; i++) pine(rng() * w, h, h * (0.25 + rng() * 0.1), hs(150, 45, 16));
+  } else if (info.type === 'mountains') {
+    const peaks = (base, height, color, snow) => {
+      let x = -w * 0.1;
+      while (x < w * 1.1) { const pw = w * (0.18 + rng() * 0.18), ph = h * height * (0.7 + rng() * 0.5);
+        g.fillStyle = color; g.beginPath(); g.moveTo(x, h * base); g.lineTo(x + pw / 2, h * base - ph); g.lineTo(x + pw, h * base); g.fill();
+        if (snow) { g.fillStyle = '#f4f7ff'; g.beginPath(); g.moveTo(x + pw / 2, h * base - ph); g.lineTo(x + pw * 0.37, h * base - ph * 0.72); g.lineTo(x + pw * 0.5, h * base - ph * 0.78); g.lineTo(x + pw * 0.63, h * base - ph * 0.72); g.fill(); }
+        x += pw * 0.7; }
+    };
+    peaks(0.75, 0.5, hs(235, 30, 40), true);
+    peaks(0.85, 0.35, hs(215, 32, 28), true);
+    hill(0.9, 0.03, hs(160, 40, 20), 2);
+    for (let i = 0; i < 16; i++) pine(rng() * w, h * (0.93 + rng() * 0.07), h * (0.2 + rng() * 0.1), hs(160, 50, 13));
+    g.fillStyle = '#ff9d3d'; g.beginPath(); g.moveTo(w * 0.7, h * 0.95); g.lineTo(w * 0.73, h * 0.86); g.lineTo(w * 0.76, h * 0.95); g.fill();
+  } else if (info.type === 'city') {
+    let x = 0;
+    while (x < w) { const bw = w * (0.06 + rng() * 0.08), bh = h * (0.3 + rng() * 0.45);
+      g.fillStyle = hs(240 + rng() * 30, 30, 22 + rng() * 10); g.fillRect(x, h - bh, bw, bh);
+      const ws = Math.max(2, bw / 6);
+      for (let yy = h - bh + ws; yy < h - ws; yy += ws * 1.8) for (let xx = x + ws * 0.7; xx < x + bw - ws; xx += ws * 1.6)
+        if (rng() > 0.45) { g.fillStyle = rng() > 0.2 ? '#ffd56b' : '#8fe3ff'; g.fillRect(xx, yy, ws * 0.8, ws * 0.9); }
+      x += bw + w * 0.008; }
+    g.fillStyle = hs(260, 30, 14); g.fillRect(0, h * 0.94, w, h * 0.06);
+  } else {
+    hill(0.7, 0.05, hs(140, 45, 30), 1);
+    g.strokeStyle = 'rgba(30,20,40,0.8)'; g.lineWidth = Math.max(1, DPR);
+    const bulbs = ['#ffd56b', '#ff7aa8', '#8ef0c4', '#8fc8ff', '#ffb38a'];
+    for (let line = 0; line < 2; line++) {
+      const y0 = h * (0.3 + line * 0.14), sag = h * 0.08;
+      g.beginPath(); g.moveTo(0, y0); g.quadraticCurveTo(w / 2, y0 + sag * 2, w, y0); g.stroke();
+      for (let i = 1; i < 12; i++) { const t = i / 12, x = t * w, y = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * (y0 + sag * 2) + t * t * y0;
+        g.fillStyle = bulbs[(i + line) % bulbs.length]; g.beginPath(); g.arc(x, y + h * 0.02, h * 0.018, 0, 7); g.fill(); }
+    }
+    hill(0.86, 0.03, hs(125, 50, 24), 3);
+    for (let i = 0; i < 26; i++) { const x = rng() * w, y = h * (0.86 + rng() * 0.12), s = h * (0.018 + rng() * 0.02);
+      g.fillStyle = hs(120, 40, 18); g.fillRect(x - 0.5, y, Math.max(1, DPR), h - y);
+      g.fillStyle = bulbs[Math.floor(rng() * bulbs.length)];
+      for (let k = 0; k < 5; k++) { g.beginPath(); g.arc(x + Math.cos(k * 1.256) * s, y + Math.sin(k * 1.256) * s, s * 0.7, 0, 7); g.fill(); }
+      g.fillStyle = '#fff3c4'; g.beginPath(); g.arc(x, y, s * 0.5, 0, 7); g.fill(); }
+  }
+  return c;
+}
+
+/* ---------- effects ---------- */
+let particles = [], flashes = [], floats = [], sparks = [], reveal = 0, revealing = false, levelDone = false;
+let shake = 0, bombArmed = false, idle = 0;
+const REDUCED = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+function burst(x, y, n, color) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * 6.283, v = 60 + Math.random() * 220;
+    sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, t: 0, life: 0.5 + Math.random() * 0.5, color, r: 1.5 + Math.random() * 2.5 });
+  }
+}
+function starsFor(moves, need) { return moves <= need * 4 ? 3 : moves <= need * 6 ? 2 : 1; }
+function findHint() {
+  // best move: prefer one that finishes a line
+  let best = null;
+  S.tray.forEach((p, i) => {
+    if (!p) return;
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      if (!canPlace(p, r, c)) continue;
+      const tmp = S.board.map(row => row.slice());
+      SHAPES[p.s].cells.forEach(([a, b]) => { tmp[r + a][c + b] = 1; });
+      let score = 0;
+      for (let k = 0; k < N; k++) { if (tmp[k].every(v => v !== -1)) score += 10; if (tmp.every(row => row[k] !== -1)) score += 10; }
+      SHAPES[p.s].cells.forEach(([a, b]) => { if (r + a === 0 || r + a === N - 1) score += 0.3; if (c + b === 0 || c + b === N - 1) score += 0.3; });
+      if (!best || score > best.score) best = { i, r, c, score };
+    }
+  });
+  return best;
+}
+let hint = null;
+function spawnFireflies(cells, spotIdx) {
+  const sp = spots[spotIdx];
+  const tx = G.x + sp.x * G.bw, ty = G.sceneY + sp.y * G.sceneH;
+  cells.forEach(([r, c], i) => {
+    for (let k = 0; k < 2; k++) {
+      const sx = G.x + (c + 0.5) * G.cell, sy = G.boardY + (r + 0.5) * G.cell;
+      particles.push({ sx, sy, tx: tx + (Math.random() - 0.5) * 16, ty: ty + (Math.random() - 0.5) * 12,
+        cx: (sx + tx) / 2 + (Math.random() - 0.5) * G.bw * 0.7, cy: Math.min(sy, ty) - Math.random() * 40,
+        t: -(i * 0.03 + k * 0.08), dur: 0.9 + Math.random() * 0.5, spot: spotIdx });
+    }
+  });
+}
+
+/* ---------- sound ---------- */
+let AC = null;
+function audio() {
+  if (!S.sound) return null;
+  try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) { AC = null; }
+  return AC;
+}
+function tone(freq, when = 0, dur = 0.25, vol = 0.12, type = 'sine') {
+  const a = audio(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + when;
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+const sfxPlace = () => tone(330, 0, 0.12, 0.08, 'triangle');
+const sfxClear = n => { [659, 784, 988, 1175, 1319].slice(0, 2 + n).forEach((f, i) => tone(f, i * 0.07, 0.4, 0.1)); };
+const sfxLit = () => tone(1568, 0, 0.5, 0.05);
+const sfxWin = () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * 0.12, 0.7, 0.1)); };
+
+/* ---------- input ---------- */
+let drag = null;
+function trayRect(i) { const sw = G.bw / 3; return { x: G.x + i * sw, y: G.trayY, w: sw, h: G.trayH }; }
+function trayScale(p) {
+  const sh = SHAPES[p.s], r = trayRect(0);
+  return Math.min(0.55, (r.w * 0.82) / (sh.w * G.cell), (r.h * 0.82) / (sh.h * G.cell));
+}
+function dragOrigin(d) {
+  const sh = SHAPES[S.tray[d.i].s];
+  const x = d.px - sh.w * G.cell / 2;
+  const y = d.touch ? d.py - sh.h * G.cell - G.cell * 0.9 : d.py - sh.h * G.cell / 2;
+  return { x, y, r0: Math.round((y - G.boardY) / G.cell), c0: Math.round((x - G.x) / G.cell) };
+}
+function pos(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+cv.addEventListener('pointerdown', e => {
+  if (revealing || levelDone) return;
+  audio(); startMusic(); idle = 0; hint = null;
+  const p = pos(e);
+  if (bombArmed) {
+    const c = Math.floor((p.x - G.x) / G.cell), r = Math.floor((p.y - G.boardY) / G.cell);
+    if (r >= 0 && c >= 0 && r < N && c < N) useBomb(r, c);
+    else { bombArmed = false; updateHud(); }
+    return;
+  }
+  for (let i = 0; i < 3; i++) {
+    const r = trayRect(i);
+    if (S.tray[i] && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y - 10 && p.y <= r.y + r.h + 10) {
+      drag = { i, px: p.x, py: p.y, sx: p.x, sy: p.y, t0: performance.now(), touch: e.pointerType !== 'mouse' };
+      cv.setPointerCapture(e.pointerId); return;
+    }
+  }
+});
+cv.addEventListener('pointermove', e => { if (!drag) return; const p = pos(e); drag.px = p.x; drag.py = p.y; });
+const endDrag = () => {
+  if (!drag) return;
+  if (Math.hypot(drag.px - drag.sx, drag.py - drag.sy) < 10 && performance.now() - drag.t0 < 350) { rotatePiece(drag.i); drag = null; return; }
+  const o = dragOrigin(drag), piece = S.tray[drag.i];
+  if (canPlace(piece, o.r0, o.c0)) place(drag.i, o.r0, o.c0);
+  drag = null;
+};
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', () => { drag = null; });
+
+function say(text) { floats.push({ text, x: G.x + G.bw / 2, y: G.trayY + G.trayH * 0.15, t: 0, small: true }); }
+function rotatePiece(i) {
+  const p = S.tray[i]; if (!p) return;
+  if (S.mode === 'daily') { say('В «Ночи дня» фигурки не крутятся'); return; }
+  if (S.rotates < 1) { if (!offerAdBonus('rotates')) say('Повороты кончились до следующей ночи'); return; }
+  if (ROT[p.s] === p.s) { say('Эту фигурку крутить незачем'); return; }
+  p.s = ROT[p.s]; S.rotates--; undoSnap = null;
+  tone(660, 0, 0.08, 0.06, 'triangle'); buzz(8);
+  save(); updateHud();
+  if (!S.tray.some(q => q && anyFits(q))) setTimeout(showStuck, 450);
+}
+let undoSnap = null;
+const SNAP_KEYS = ['board', 'tray', 'score', 'moves', 'streak', 'lines', 'bombs', 'lit', 'best'];
+function place(i, r0, c0) {
+  const piece = S.tray[i], sh = SHAPES[piece.s];
+  undoSnap = S.mode === 'daily' ? null : JSON.stringify(SNAP_KEYS.map(k => S[k]));
+  sh.cells.forEach(([r, c]) => { S.board[r0 + r][c0 + c] = piece.c; });
+  S.tray[i] = null;
+  S.score += sh.cells.length;
+  S.moves++;
+  sfxPlace(); buzz(12);
+  // full lines
+  const rows = [], cols = [];
+  for (let r = 0; r < N; r++) if (S.board[r].every(v => v !== -1)) rows.push(r);
+  for (let c = 0; c < N; c++) if (S.board.every(row => row[c] !== -1)) cols.push(c);
+  const lines = [...rows.map(r => Array.from({ length: N }, (_, c) => [r, c])), ...cols.map(c => Array.from({ length: N }, (_, r) => [r, c]))];
+  if (lines.length) {
+    const info = curInfo();
+    lines.forEach(cells => {
+      cells.forEach(([r, c]) => {
+        if (S.board[r][c] === -1) return;
+        flashes.push({ r, c, col: S.board[r][c], t: 0 });
+        burst(G.x + (c + 0.5) * G.cell, G.boardY + (r + 0.5) * G.cell, 5, COLORS[S.board[r][c]][0]);
+      });
+      if (S.lit < info.need) { spawnFireflies(cells, S.lit); S.lit++; }
+    });
+    lines.flat().forEach(([r, c]) => { S.board[r][c] = -1; });
+    S.streak++;
+    const mult = Math.min(S.streak, 5);
+    let gain = 10 * lines.length * lines.length * mult;
+    const before = Math.floor(S.lines / 4);
+    S.lines += lines.length;
+    if (Math.floor(S.lines / 4) > before) { S.bombs++; floats.push({ text: '+1 бомба', x: G.x + G.bw / 2, y: G.boardY + G.bw * 0.72, t: 0, small: true }); }
+    const power = lines.length + mult - 1;
+    const words = ['Хорошо!', 'Отлично!', 'Супер!', 'Невероятно!', 'Легенда!'];
+    if (power >= 2) floats.push({ text: words[Math.min(power - 2, words.length - 1)], x: G.x + G.bw / 2, y: G.boardY + G.bw * 0.38, t: 0, big: true });
+    if (S.board.every(row => row.every(v => v === -1))) {
+      gain += 100; S.bombs++;
+      floats.push({ text: 'Чистое поле! +100', x: G.x + G.bw / 2, y: G.boardY + G.bw * 0.62, t: 0, big: true });
+      shake = Math.max(shake, 14);
+    }
+    S.score += gain;
+    floats.push({ text: (mult > 1 ? `Серия ×${mult}  ` : '') + `+${gain}`, x: G.x + G.bw / 2, y: G.boardY + G.bw / 2, t: 0 });
+    shake = Math.max(shake, 3 + power * 3);
+    sfxClear(lines.length + mult - 1); buzz(lines.length > 1 ? [30, 40, 60] : 35);
+    undoSnap = null; // the fireflies have flown, a cleared line can't be taken back
+  } else {
+    S.streak = 0;
+  }
+  if (S.mode !== 'daily') { S.best = Math.max(S.best, S.score); pushScore(); }
+  if (S.tray.every(p => !p)) newTray();
+  save(); updateHud();
+  if (!curInfo().endless && S.lit >= curInfo().need) { levelDone = true; return; }
+  if (!S.tray.some(p => p && anyFits(p))) setTimeout(showStuck, 450);
+}
+function undo() {
+  if (!undoSnap || S.mode === 'daily' || revealing || levelDone) return;
+  if (S.undos < 1) { offerAdBonus('undos'); return; }
+  JSON.parse(undoSnap).forEach((v, k) => { S[SNAP_KEYS[k]] = v; });
+  undoSnap = null; S.undos--; bombArmed = false;
+  tone(392, 0, 0.12, 0.07, 'triangle'); tone(330, 0.07, 0.15, 0.07, 'triangle');
+  save(); updateHud(); closeCard();
+}
+$('undoBtn').onclick = undo;
+
+/* ---------- HUD & overlays ---------- */
+function updateHud() {
+  const info = curInfo();
+  $('levelName').textContent = info.daily ? `Ночь дня · ${new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}` : `Ночь ${S.level + 1} · ${info.name}`;
+  $('lightStat').textContent = `${Math.min(S.lit, info.need)}/${info.need}`;
+  $('scoreStat').textContent = S.score;
+  const daily = S.mode === 'daily';
+  $('bombN').textContent = daily ? '–' : S.bombs; $('shuffleN').textContent = daily ? '–' : S.shuffles; $('undoN').textContent = daily ? '–' : S.undos;
+  const ad = typeof Ads !== 'undefined' && Ads.ready;
+  $('bombBtn').disabled = daily || (S.bombs < 1 && !bombArmed && !ad);
+  $('shuffleBtn').disabled = daily || (S.shuffles < 1 && !ad);
+  $('undoBtn').disabled = daily || !undoSnap || (S.undos < 1 && !ad);
+  $('bombBtn').classList.toggle('armed', bombArmed);
+}
+function buzz(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+function useBomb(r0, c0) {
+  bombArmed = false; S.bombs--; undoSnap = null;
+  for (let r = r0 - 1; r <= r0 + 1; r++) for (let c = c0 - 1; c <= c0 + 1; c++) {
+    if (r < 0 || c < 0 || r >= N || c >= N || S.board[r][c] === -1) continue;
+    flashes.push({ r, c, col: S.board[r][c], t: 0 }); S.board[r][c] = -1;
+  }
+  burst(G.x + (c0 + 0.5) * G.cell, G.boardY + (r0 + 0.5) * G.cell, 40, '#ffb347');
+  shake = 16; buzz([40, 30, 80]);
+  tone(110, 0, 0.5, 0.18, 'sawtooth'); tone(80, 0.05, 0.6, 0.15, 'triangle');
+  save(); updateHud();
+}
+$('bombBtn').onclick = () => {
+  if (revealing || levelDone || S.mode === 'daily') return;
+  if (S.bombs < 1 && !bombArmed) { offerAdBonus('bombs'); return; }
+  if (bombArmed) bombArmed = false; else if (S.bombs > 0) bombArmed = true;
+  updateHud();
+};
+$('shuffleBtn').onclick = () => {
+  if (revealing || levelDone || S.mode === 'daily') return;
+  if (S.shuffles < 1) { offerAdBonus('shuffles'); return; }
+  S.shuffles--; S.tray = [null, null, null]; newTray(); idle = 0; undoSnap = null;
+  tone(523, 0, 0.15, 0.08); tone(784, 0.08, 0.2, 0.08);
+  save(); updateHud(); closeCard();
+};
+
+/* gentle night music: a slow pentatonic tune made on the fly */
+let musicOn = false, musicTimer = null;
+const SCALE = [392, 440, 523, 587, 659, 784, 880];
+function startMusic() {
+  if (!S.sound || musicOn || !audio()) return;
+  musicOn = true; let step = 0;
+  const tick = () => {
+    if (!S.sound) { musicOn = false; return; }
+    const bar = Math.floor(step / 8) % 4, root = [0, 3, 1, 4][bar];
+    if (step % 8 === 0) tone(SCALE[root] / 4, 0, 2.2, 0.05, 'sine');
+    if (Math.random() < 0.7) tone(SCALE[(root + [0, 2, 4, 2, 5, 4, 2, 1][step % 8]) % SCALE.length], 0, 0.9, 0.025, 'triangle');
+    step++; musicTimer = setTimeout(tick, 360);
+  };
+  tick();
+}
+function openCard(html, onReady, low) {
+  $('card').innerHTML = html; $('overlay').hidden = false; $('overlay').classList.toggle('low', !!low);
+  if (onReady) onReady($('card'));
+  const b = $('card').querySelector('button'); if (b) b.focus();
+}
+function closeCard() { $('overlay').hidden = true; }
+const STAR_SVG = on => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z" fill="${on ? '#e3b448' : 'none'}" stroke="#13152b" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+const esc = v => String(v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+function showHelp() {
+  openCard(`<p class="eyebrow">Как играть</p>
+    <h2>Ночь накрыла мир. Верни ему свет</h2>
+    <ul class="how">
+      <li><span>Перетаскивай фигурки на поле.</span></li>
+      <li><span>Заполни ряд или столбик. Он исчезнет, а светлячки полетят к картинке.</span></li>
+      <li><span>Зажги всю картинку и забери открытку в коллекцию.</span></li>
+      <li><span>Собирай линии ход за ходом: серия умножает очки до ×5. Каждые 4 линии дают бомбу.</span></li>
+      <li><span>Нажми на фигурку, чтобы повернуть её. Ошибся? Жми «Отмена».</span></li>
+    </ul>
+    <p>Здесь нет рекламы, а фигурки честные: каждую тройку можно поставить целиком.</p>
+    <button class="btn" id="playBtn">Играть</button>`, card => {
+    card.querySelector('#playBtn').onclick = () => { S.seenHelp = true; save(); audio(); startMusic(); closeCard(); if (!S.nick) showNick(); };
+  });
+}
+function showStuck() {
+  if (levelDone || !$('overlay').hidden) return;
+  if (S.tray.some(p => p && anyFits(p))) return;
+  if (S.mode === 'daily') { showDailyOver(); return; }
+  const opts = [];
+  if (S.undos > 0 && undoSnap) opts.push(`<button class="btn" id="stuckUndo">Отменить ход (${S.undos})</button>`);
+  if (S.rotates > 0) opts.push(`<button class="btn${opts.length ? ' alt' : ''}" id="stuckRot">Покрутить фигурки (поворотов: ${S.rotates})</button>`);
+  if (S.bombs > 0) opts.push(`<button class="btn${opts.length ? ' alt' : ''}" id="stuckBomb">Бросить бомбу (осталось ${S.bombs})</button>`);
+  if (S.shuffles > 0) opts.push(`<button class="btn${opts.length ? ' alt' : ''}" id="stuckShuffle">Взять другие фигурки (${S.shuffles})</button>`);
+  if (Ads.ready && S.bombs < 1) opts.push(`<button class="btn${opts.length ? ' alt' : ''}" id="stuckAd">Видео за бомбу</button>`);
+  opts.push(`<button class="btn${opts.length ? ' alt' : ''}" id="clearBtn">Очистить всё поле</button>`);
+  openCard(`<p class="eyebrow">Поле заполнено</p>
+    <h2>Места больше нет</h2>
+    <p>Зажжённые светлячки никуда не денутся. Спасись бонусом или начни поле заново.</p>
+    ${opts.join('')}`, card => {
+    const u = card.querySelector('#stuckUndo'); if (u) u.onclick = undo;
+    const sa = card.querySelector('#stuckAd'); if (sa) sa.onclick = async () => { closeCard(); if (await Ads.rewarded()) { S.bombs++; bombArmed = true; save(); updateHud(); } else setTimeout(showStuck, 300); };
+    const ro = card.querySelector('#stuckRot'); if (ro) ro.onclick = closeCard;
+    const b = card.querySelector('#stuckBomb'); if (b) b.onclick = () => { bombArmed = true; updateHud(); closeCard(); };
+    const s = card.querySelector('#stuckShuffle'); if (s) s.onclick = () => $('shuffleBtn').onclick();
+    card.querySelector('#clearBtn').onclick = () => { S.board = emptyBoard(); S.streak = 0; undoSnap = null; newTray(); save(); updateHud(); closeCard(); };
+  }, true);
+}
+function showWin() {
+  const info = curInfo();
+  if (!S.cards.includes(S.level)) S.cards.push(S.level);
+  const st = starsFor(S.moves, info.need);
+  S.stars[S.level] = Math.max(S.stars[S.level] || 0, st);
+  save(); pushScore(true);
+  const tip = st === 3 ? 'Три звезды! За это даём лишнюю смену фигурок и отмену.' : `Ходов: ${S.moves}. Для трёх звёзд уложись в ${info.need * 4}.`;
+  const newRank = rankFor(S.cards.length) !== rankFor(S.cards.length - 1) ? rankFor(S.cards.length) : '';
+  openCard(`<p class="eyebrow">Ночь ${S.level + 1} зажжена</p>
+    <h2>${esc(info.name)}</h2>
+    <div class="stars" aria-label="${st} из 3 звёзд">${[1, 2, 3].map(k => STAR_SVG(k <= st)).join('')}</div>
+    ${newRank ? `<span class="rank-badge">Новое звание: ${newRank}</span>` : ''}
+    <div id="pc"></div>
+    <p>${tip}</p>
+    <button class="btn" id="nextBtn">Следующая ночь</button>`, card => {
+    const pc = document.createElement('canvas'); pc.className = 'pc'; pc.width = sceneColor.width; pc.height = sceneColor.height;
+    pc.getContext('2d').drawImage(sceneColor, 0, 0); card.querySelector('#pc').appendChild(pc);
+    card.querySelector('#nextBtn').onclick = () => {
+      S.level++; S.lit = 0; S.moves = 0; S.streak = 0; S.shuffles = Math.max(S.shuffles, 1) + (st === 3 ? 1 : 0);
+      S.rotates = 3; S.undos = Math.max(S.undos, 1) + (st === 3 ? 1 : 0); undoSnap = null;
+      S.nightsSinceAd = (S.nightsSinceAd || 0) + 1;
+      if (S.level >= 3 && S.nightsSinceAd >= 2) { S.nightsSinceAd = 0; Ads.between(); }
+      S.board = emptyBoard(); S.tray = [null, null, null]; newTray(); save();
+      levelDone = false; revealing = false; reveal = 0; particles = []; spots = [];
+      buildScene(); updateHud(); closeCard();
+    };
+  });
+}
+function showGallery() {
+  const list = [...S.cards].sort((a, b) => a - b);
+  openCard(`<p class="eyebrow">Коллекция · ${list.length} шт.</p>
+    <h2>Мои открытки</h2>
+    ${list.length ? '<div class="gallery" id="gal"></div>' : '<p class="empty">Пока пусто. Зажги первую картинку, и открытка ляжет сюда.</p>'}
+    <button class="btn" id="closeBtn">Закрыть</button>`, card => {
+    const gal = card.querySelector('#gal');
+    list.forEach(L => {
+      const info = levelInfo(L);
+      const f = document.createElement('figure');
+      const c = drawScene(info, 300, 144);
+      const cap = document.createElement('figcaption'); cap.textContent = `${L + 1}. ${info.name} `;
+      const ms = document.createElement('b'); ms.textContent = '★'.repeat(S.stars[L] || 1);
+      cap.appendChild(ms);
+      f.append(c, cap); gal.appendChild(f);
+    });
+    card.querySelector('#closeBtn').onclick = closeCard;
+  });
+}
+
+/* ---------- ads ----------
+   The web page never shows ads. Inside the Android app (Capacitor + AdMob) there are two kinds:
+   a rewarded video the player chooses to watch for a bonus, and a short ad between nights
+   (never in the first nights, never mid-game, at most every second night). */
+const IS_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const AD_IDS = window.SVET_ADS || {};
+const Ads = {
+  ready: false, busy: false,
+  async init() {
+    try {
+      const AdMob = IS_APP && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob;
+      if (!AdMob || !AD_IDS.rewarded) return;
+      await AdMob.initialize({ initializeForTesting: !!AD_IDS.testing, tagForChildDirectedTreatment: false, tagForUnderAgeOfConsent: false, maxAdContentRating: 'General' });
+      try {
+        const info = await AdMob.requestConsentInfo();
+        if (info && info.isConsentFormAvailable && info.status === 'REQUIRED') await AdMob.showConsentForm();
+      } catch (e) {}
+      this.AdMob = AdMob; this.ready = true; updateHud();
+    } catch (e) { this.ready = false; }
+  },
+  async rewarded() {
+    if (!this.ready || this.busy) return false;
+    this.busy = true;
+    try {
+      await this.AdMob.prepareRewardVideoAd({ adId: AD_IDS.rewarded, isTesting: !!AD_IDS.testing });
+      const reward = await this.AdMob.showRewardVideoAd();
+      return !!reward;
+    } catch (e) { return false; } finally { this.busy = false; }
+  },
+  async between() {
+    if (!this.ready || this.busy || !AD_IDS.interstitial) return;
+    this.busy = true;
+    try { await this.AdMob.prepareInterstitial({ adId: AD_IDS.interstitial, isTesting: !!AD_IDS.testing }); await this.AdMob.showInterstitial(); }
+    catch (e) {} finally { this.busy = false; }
+  }
+};
+Ads.init();
+function offerAdBonus(kind) {
+  if (!Ads.ready) return false;
+  const names = { bombs: 'бомбу', undos: 'отмену', shuffles: 'смену фигурок', rotates: '2 поворота' };
+  openCard(`<p class="eyebrow">Бонус</p>
+    <h2>Бонусы кончились</h2>
+    <p>Посмотри короткое видео и получи ${names[kind]}. Это по желанию.</p>
+    <button class="btn" id="adYes">Смотреть видео</button>
+    <button class="btn alt" id="adNo">Не надо</button>`, card => {
+    card.querySelector('#adNo').onclick = closeCard;
+    card.querySelector('#adYes').onclick = async () => {
+      closeCard();
+      if (await Ads.rewarded()) { S[kind] += kind === 'rotates' ? 2 : 1; save(); updateHud(); say('Бонус получен!'); }
+    };
+  });
+  return true;
+}
+
+/* ---------- menu & daily night ---------- */
+const PLAY_KEYS = ['board', 'tray', 'lit', 'score', 'moves', 'streak', 'seq'];
+const pick = keys => Object.fromEntries(keys.map(k => [k, S[k]]));
+function resetEffects() { levelDone = false; revealing = false; reveal = 0; particles = []; flashes = []; spots = []; bombArmed = false; undoSnap = null; }
+function enterDaily(fresh) {
+  if (S.mode !== 'daily') S.nightStash = pick(PLAY_KEYS);
+  const k = todayKey(), g = S.dailyGame;
+  S.mode = 'daily';
+  if (!fresh && g && g.date === k && !g.over) Object.assign(S, g);
+  else Object.assign(S, { board: emptyBoard(), tray: [null, null, null], lit: 0, score: 0, moves: 0, streak: 0, seq: 0 }), newTray();
+  S.dailyGame = Object.assign(pick(PLAY_KEYS), { date: k, over: false });
+  resetEffects(); buildScene(); updateHud(); save(); closeCard();
+  if (!S.tray.some(p => p && anyFits(p))) setTimeout(showStuck, 600);
+}
+function exitDaily() {
+  if (S.mode !== 'daily') return;
+  S.dailyGame = Object.assign(pick(PLAY_KEYS), { date: S.dailyGame ? S.dailyGame.date : todayKey(), over: S.dailyGame ? S.dailyGame.over : false });
+  Object.assign(S, S.nightStash || { board: emptyBoard(), tray: [null, null, null], lit: 0, score: 0, moves: 0, streak: 0 });
+  S.mode = 'night';
+  if (S.tray.every(p => !p)) newTray();
+  resetEffects(); buildScene(); updateHud(); save(); closeCard();
+  if (S.lit >= curInfo().need) levelDone = true;
+}
+function todayBest() { return S.dailyBest && S.dailyBest.date === todayKey() ? S.dailyBest.score : 0; }
+function showDailyOver() {
+  const k = todayKey();
+  const prev = todayBest();
+  if (S.score > prev) S.dailyBest = { date: k, score: S.score };
+  if (S.dailyGame) S.dailyGame.over = true;
+  save(); pushScore(true);
+  const myRank = dailyRows ? (dailyRows.filter(r => r.id !== UID && r.dailyBest > S.score).length + 1) : null;
+  openCard(`<p class="eyebrow">Ночь дня · ${new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</p>
+    <h2>${S.score > prev && prev > 0 ? 'Новый рекорд дня!' : 'Ночь дня окончена'}</h2>
+    <p class="big-score">${S.score}</p>
+    <p>Лучший результат сегодня: ${Math.max(prev, S.score)}${myRank ? `. Сейчас ты ${myRank}-й в таблице дня.` : '.'} У всех сегодня одна и та же картинка и одинаковое начало.</p>
+    <button class="btn" id="dLead">Таблица дня</button>
+    <button class="btn alt" id="dAgain">Сыграть ещё раз</button>
+    <button class="btn alt" id="dBack">Вернуться к ночам</button>`, card => {
+    card.querySelector('#dLead').onclick = () => showLeaders('daily');
+    card.querySelector('#dAgain').onclick = () => enterDaily(true);
+    card.querySelector('#dBack').onclick = exitDaily;
+  }, true);
+}
+function showMenu() {
+  const daily = S.mode === 'daily';
+  openCard(`<p class="eyebrow">${esc(S.nick || 'Игрок')} · ${rankFor(S.cards.length)}</p>
+    <h2>Меню</h2>
+    <div class="menu">
+      ${daily ? `<button class="btn" id="mBack">Вернуться к ночам (ночь ${S.level + 1})</button>`
+              : `<button class="daily-btn" id="mDaily"><b>Ночь дня</b><span class="go">→</span><small>Одна картинка на всех, без бонусов. Рекорд дня: ${todayBest()}</small></button>`}
+      <button class="btn alt" id="mLead">Таблица лидеров</button>
+      <button class="btn alt" id="mStyle">Темы и скины кубов</button>
+      <button class="btn alt" id="mCards">Мои открытки (${S.cards.length})</button>
+      <button class="btn alt" id="mSound">Звук и музыка: ${S.sound ? 'вкл' : 'выкл'}</button>
+      <button class="btn alt" id="mHelp">Как играть</button>
+      <button class="btn" id="mClose">Продолжить</button>
+    </div>`, card => {
+    const d = card.querySelector('#mDaily'); if (d) d.onclick = () => enterDaily(false);
+    const bk = card.querySelector('#mBack'); if (bk) bk.onclick = exitDaily;
+    card.querySelector('#mLead').onclick = () => showLeaders(daily ? 'daily' : 'all');
+    card.querySelector('#mCards').onclick = showGallery;
+    card.querySelector('#mStyle').onclick = showStyle;
+    card.querySelector('#mSound').onclick = () => { S.sound = !S.sound; S.music = S.sound; save(); if (S.sound) { tone(880, 0, 0.2, 0.08); startMusic(); } showMenu(); };
+    card.querySelector('#mHelp').onclick = showHelp;
+    card.querySelector('#mClose').onclick = closeCard;
+  });
+}
+$('menuBtn').onclick = showMenu;
+function showStyle() {
+  const stars = totalStars(), nights = S.cards.length;
+  openCard(`<p class="eyebrow">Звёзд: ${stars} · Ночей: ${nights}</p>
+    <h2>Темы и скины</h2>
+    <h3>Скины кубов</h3><div class="pick-grid" id="skinGrid"></div>
+    <h3>Темы</h3><div class="pick-grid" id="themeGrid"></div>
+    <button class="btn" id="closeBtn">Готово</button>`, card => {
+    const sg = card.querySelector('#skinGrid'), tg = card.querySelector('#themeGrid');
+    SKINS.forEach(k => {
+      const open = stars >= k.stars, b = document.createElement('button');
+      b.className = 'pick'; b.disabled = !open; b.setAttribute('aria-pressed', String(SKIN.id === k.id));
+      const cv2 = document.createElement('canvas'); cv2.width = 180; cv2.height = 88;
+      const keep = [ctx, SKIN, COLORS];
+      ctx = cv2.getContext('2d'); SKIN = k; COLORS = k.colors;
+      ctx.fillStyle = THEME.ink2; ctx.fillRect(0, 0, 180, 88);
+      [0, 1, 2].forEach(i => block(18 + i * 50, 19, 48, i * 2));
+      [ctx, SKIN, COLORS] = keep;
+      const nm = document.createElement('span'); nm.textContent = k.name;
+      const sm = document.createElement('small'); sm.textContent = open ? (SKIN.id === k.id ? 'выбран' : 'открыт') : `★ ${k.stars}`;
+      b.append(cv2, nm, sm);
+      b.onclick = () => { S.skin = k.id; save(); applyLook(); showStyle(); };
+      sg.appendChild(b);
+    });
+    THEMES.forEach(t => {
+      const open = nights >= t.nights, b = document.createElement('button');
+      b.className = 'pick'; b.disabled = !open; b.setAttribute('aria-pressed', String(THEME.id === t.id));
+      const sw = document.createElement('span'); sw.className = 'sw';
+      sw.style.background = `linear-gradient(90deg, ${t.ink} 0 40%, ${t.ink2} 40% 62%, ${t.accent} 62% 81%, ${t.ember} 81%)`;
+      const nm = document.createElement('span'); nm.textContent = t.name;
+      const sm = document.createElement('small'); sm.textContent = open ? (THEME.id === t.id ? 'выбрана' : 'открыта') : `ночей: ${t.nights}`;
+      b.append(sw, nm, sm);
+      b.onclick = () => { S.theme = t.id; save(); applyLook(); showStyle(); };
+      tg.appendChild(b);
+    });
+    card.querySelector('#closeBtn').onclick = closeCard;
+  });
+}
+
+/* ---------- nickname & leaderboard ---------- */
+const NICK_RE = /^[\p{L}\p{N}_ .\-]{2,16}$/u;
+const BAD = ['хуй', 'хуе', 'хуё', 'пизд', 'ебa', 'еба', 'ебл', 'ебу', 'бля', 'сука', 'суки', 'мудак', 'гандон', 'шлюх', 'пидор', 'пидар', 'fuck', 'shit', 'bitch', 'dick', 'cunt', 'nigg', 'porn', 'sex', 'секс', 'нацик', 'hitler', 'гитлер'];
+const nickKey = v => encodeURIComponent(v.toLowerCase().replace(/ё/g, 'е')).replace(/%/g, '~');
+function nickProblem(v) {
+  if (!NICK_RE.test(v)) return 'От 2 до 16 символов: буквы, цифры, пробел, _ . -';
+  const flat = v.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '').replace(/0/g, 'o').replace(/3/g, 'з');
+  if (BAD.some(w => flat.includes(w))) return 'Такой ник не подойдёт. Придумай другой.';
+  return '';
+}
+async function claimNick(v) {
+  // a nickname belongs to one player: the claim document under nicks/ records who owns it
+  if (!DB || !UID) return 'ok';
+  const ref = DB.doc('nicks/' + nickKey(v));
+  try {
+    const lease = await ref.acquire({ holder: UID, ttlMs: 5000 });
+    if (!lease.acquired) return 'taken';
+    const snap = await ref.get();
+    const owner = snap.exists ? snap.data().uid : null;
+    if (owner && owner !== UID) return 'taken';
+    if (owner !== UID) await ref.set({ uid: UID, nick: v, at: new Date().toISOString() });
+    return 'ok';
+  } catch (e) { return 'error'; }
+}
+function showNick(after, reason) {
+  openCard(`<p class="eyebrow">Таблица лидеров</p>
+    <h2>Как тебя записать?</h2>
+    ${reason ? `<p>${esc(reason)}</p>` : ''}
+    <div class="field"><label for="nickInput">Ник</label><input id="nickInput" maxlength="16" autocomplete="off" spellcheck="false" placeholder="Например, Луна_07"></div>
+    <div class="err" id="nickErr"></div>
+    <p class="note">Ник выбирается один раз и навсегда. У каждого игрока он свой: два одинаковых ника не бывает.</p>
+    <button class="btn" id="nickOk">Занять ник</button>
+    <button class="btn alt" id="nickSkip">Позже</button>`, card => {
+    const inp = card.querySelector('#nickInput'), err = card.querySelector('#nickErr'), okBtn = card.querySelector('#nickOk');
+    setTimeout(() => inp.focus(), 50);
+    const ok = async () => {
+      const v = inp.value.trim().replace(/\s+/g, ' ');
+      const pr = nickProblem(v); if (pr) { err.textContent = pr; return; }
+      okBtn.disabled = true; err.textContent = 'Проверяем, свободен ли ник…';
+      const res = await claimNick(v);
+      okBtn.disabled = false;
+      if (res === 'taken') { err.textContent = `Ник «${v}» уже занят. Попробуй другой.`; return; }
+      if (res === 'error') { err.textContent = 'Не получилось проверить ник. Попробуй ещё раз.'; return; }
+      S.nick = v; S.nickClaimed = !!DB; save(); pushScore(true); closeCard(); if (after) after();
+    };
+    okBtn.onclick = ok;
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+    card.querySelector('#nickSkip').onclick = () => { closeCard(); if (after) after(); };
+  });
+}
+let DB = null, UID = null, rows = null, dailyRows = null, rowsState = 'loading', unsub = null, lbTab = 'all';
+(async () => {
+  try {
+    if (!window.claude || !window.claude.use) { rowsState = 'off'; return; }
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) { rowsState = 'off'; return; }
+    UID = await user.id();
+    DB = db;
+    if (S.nick && !S.nickClaimed) {
+      const res = await claimNick(S.nick);
+      if (res === 'ok') { S.nickClaimed = true; save(); }
+      else if (res === 'taken') { const old = S.nick; S.nick = null; save(); showNick(null, `Ник «${old}» уже занял другой игрок. Выбери новый, это последний раз.`); }
+    }
+    const timer = setTimeout(() => { if (rowsState === 'loading') { rowsState = 'slow'; renderLeaders(); } }, 10000);
+    unsub = db.collection('scores').orderBy('best', 'desc').limit(100).onSnapshot(snap => {
+      rows = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => typeof r.nick === 'string' && typeof r.best === 'number');
+      if (!snap.metadata.fromCache) { clearTimeout(timer); rowsState = 'ok'; }
+      renderLeaders();
+    }, () => { clearTimeout(timer); rowsState = 'error'; renderLeaders(); });
+    db.collection('scores').where('dailyDate', '==', todayKey()).limit(200).onSnapshot(snap => {
+      dailyRows = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => typeof r.nick === 'string' && typeof r.dailyBest === 'number');
+      renderLeaders();
+    }, () => {});
+    pushScore(true);
+  } catch (e) { rowsState = 'off'; }
+})();
+let lastPushed = null, pushTimer = null, pushing = false;
+function pushScore(now) {
+  if (!DB || !UID || !S.nick) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(async () => {
+    const body = { nick: S.nick, best: S.best, nights: S.cards.length, stars: Object.values(S.stars).reduce((a, b) => a + b, 0), at: new Date().toISOString() };
+    if (todayBest() > 0) { body.dailyDate = todayKey(); body.dailyBest = todayBest(); }
+    const key = JSON.stringify([body.nick, body.best, body.nights, body.stars, body.dailyDate, body.dailyBest]);
+    if (key === lastPushed || pushing) return;
+    pushing = true;
+    try { await DB.doc('scores/' + UID).set(body); lastPushed = key; }
+    catch (e) { if (e && e.code === 'invalid_argument') DB = null; }
+    pushing = false;
+  }, now ? 200 : 3000);
+}
+function showLeaders(tab) {
+  if (tab === 'all' || tab === 'daily') lbTab = tab;
+  if (!S.nick && DB) { showNick(() => showLeaders(lbTab)); return; }
+  openCard(`<p class="eyebrow">Все игроки</p>
+    <h2>Таблица лидеров</h2>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabAll" aria-selected="${lbTab === 'all'}">За всё время</button>
+      <button class="tab" role="tab" id="tabDaily" aria-selected="${lbTab === 'daily'}">Ночь дня</button>
+    </div>
+    <div id="lb"></div>
+    <button class="btn" id="closeBtn">Закрыть</button>
+    ${S.nick ? '' : '<button class="btn alt" id="renameBtn">Выбрать ник</button>'}`, card => {
+    card.querySelector('#closeBtn').onclick = closeCard;
+    const rn = card.querySelector('#renameBtn'); if (rn) rn.onclick = () => showNick(() => showLeaders(lbTab));
+    card.querySelector('#tabAll').onclick = () => showLeaders('all');
+    card.querySelector('#tabDaily').onclick = () => showLeaders('daily');
+    renderLeaders();
+  });
+}
+function renderLeaders() {
+  const box = document.getElementById('lb'); if (!box) return;
+  box.textContent = '';
+  const note = t => { const p = document.createElement('p'); p.className = 'note'; p.textContent = t; box.appendChild(p); };
+  const daily = lbTab === 'daily';
+  const src = daily ? dailyRows : rows;
+  let list = src ? src.map(r => ({ ...r, val: daily ? r.dailyBest : r.best })) : [];
+  if (rowsState === 'off' || rowsState === 'error') {
+    note(rowsState === 'off' ? (IS_APP ? 'Общая таблица заработает в одном из следующих обновлений. Пока показываем только тебя.' : 'Общая таблица работает, когда игра открыта по ссылке и ты вошёл в аккаунт. Пока показываем только тебя.') : 'Таблица сейчас не загрузилась. Пока показываем только тебя.');
+    list = [];
+  } else if (!src) { note(rowsState === 'slow' ? 'Таблица грузится дольше обычного…' : 'Загружаем…'); }
+  // make sure the player sees themselves with the freshest score
+  if (S.nick) {
+    const mine = list.find(r => r.id === UID);
+    const myVal = daily ? todayBest() : S.best;
+    if (mine) { mine.val = Math.max(mine.val, myVal); mine.nick = S.nick; mine.nights = Math.max(mine.nights || 0, S.cards.length); }
+    else if (!daily || myVal > 0) list.push({ id: UID || 'me', nick: S.nick, val: myVal, nights: S.cards.length });
+  }
+  list.sort((a, b) => b.val - a.val);
+  if (!list.length) { note(daily ? 'Сегодня ещё никто не играл Ночь дня. Будь первым!' : 'Тут пока никого. Сыграй и стань первым!'); return; }
+  const ol = document.createElement('ol'); ol.className = 'board-list';
+  list.slice(0, 50).forEach((r, i) => {
+    const li = document.createElement('li');
+    if (r.id === UID || r.id === 'me') li.className = 'me';
+    const rk = document.createElement('span'); rk.className = 'rk'; rk.textContent = i + 1;
+    const nk = document.createElement('span'); nk.className = 'nk'; nk.textContent = r.nick + (li.className ? ' (ты)' : '');
+    const nt = document.createElement('span'); nt.className = 'nt'; nt.textContent = rankFor(r.nights || 0);
+    const sc = document.createElement('span'); sc.className = 'sc'; sc.textContent = r.val;
+    li.append(rk, nk, nt, sc); ol.appendChild(li);
+  });
+  box.appendChild(ol);
+}
+
+/* paper grain, shared by the page and the postcards */
+(() => {
+  try {
+    const g = document.createElement('canvas'); g.width = g.height = 160;
+    const x = g.getContext('2d'), img = x.createImageData(160, 160);
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 14; }
+    x.putImageData(img, 0, 0);
+    document.documentElement.style.setProperty('--grain', `url(${g.toDataURL()})`);
+  } catch (e) {}
+})();
+
+/* ---------- drawing ---------- */
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+function block(x, y, s, col, alpha = 1) {
+  const [face, edge] = COLORS[col % COLORS.length];
+  const p = s * 0.05, w = s - p * 2, d = Math.max(2, s * 0.09);
+  ctx.globalAlpha = alpha;
+  switch (SKIN.style) {
+    case 'candy': {
+      const r = s * 0.32;
+      ctx.fillStyle = edge; rr(x + p, y + p, w, w, r); ctx.fill();
+      ctx.fillStyle = face; rr(x + p, y + p, w, w - d, r); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.ellipse(x + s * 0.36, y + s * 0.3, s * 0.15, s * 0.08, -0.5, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.arc(x + s * 0.62, y + s * 0.24, s * 0.04, 0, 7); ctx.fill();
+      break;
+    }
+    case 'wood': {
+      const r = s * 0.08;
+      ctx.fillStyle = edge; rr(x + p, y + p, w, w, r); ctx.fill();
+      ctx.fillStyle = face; rr(x + p, y + p, w, w - d, r); ctx.fill();
+      ctx.strokeStyle = rgba(edge, 0.55); ctx.lineWidth = Math.max(1, s * 0.025);
+      for (let k = 0; k < 3; k++) { const yy = y + p + s * (0.22 + k * 0.22); ctx.beginPath(); ctx.moveTo(x + p + s * 0.1, yy); ctx.bezierCurveTo(x + s * 0.4, yy - s * 0.06, x + s * 0.6, yy + s * 0.06, x + s - p - s * 0.1, yy); ctx.stroke(); }
+      ctx.fillStyle = rgba(edge, 0.6); ctx.beginPath(); ctx.ellipse(x + s * 0.68, y + s * 0.5, s * 0.06, s * 0.035, 0, 0, 7); ctx.fill();
+      break;
+    }
+    case 'lantern': {
+      const r = s * 0.18;
+      ctx.fillStyle = edge; rr(x + p, y + p, w, w, r); ctx.fill();
+      const g = ctx.createRadialGradient(x + s / 2, y + s * 0.48, 0, x + s / 2, y + s * 0.48, s * 0.42);
+      g.addColorStop(0, '#fffbe6'); g.addColorStop(0.25, face); g.addColorStop(1, rgba(face, 0));
+      ctx.fillStyle = g; rr(x + p, y + p, w, w, r); ctx.fill();
+      ctx.strokeStyle = rgba(face, 0.8); ctx.lineWidth = Math.max(1, s * 0.04); rr(x + p * 1.6, y + p * 1.6, w - p * 1.2, w - p * 1.2, r * 0.8); ctx.stroke();
+      break;
+    }
+    case 'gem': {
+      const x0 = x + p, y0 = y + p, x1 = x0 + w, y1 = y0 + w, cx = x + s / 2, cy = y + s / 2, i = s * 0.2;
+      ctx.fillStyle = edge; rr(x0, y0, w, w, s * 0.06); ctx.fill();
+      const tri = (pts, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(pts[0], pts[1]); for (let k = 2; k < pts.length; k += 2) ctx.lineTo(pts[k], pts[k + 1]); ctx.closePath(); ctx.fill(); };
+      tri([x0, y0, x1, y0, x1 - i, y0 + i, x0 + i, y0 + i], rgba(face, 1));
+      tri([x0, y0, x0 + i, y0 + i, x0 + i, y1 - i, x0, y1], rgba(face, 0.8));
+      tri([x1, y0, x1, y1, x1 - i, y1 - i, x1 - i, y0 + i], rgba(face, 0.6));
+      ctx.fillStyle = face; ctx.fillRect(x0 + i, y0 + i, w - i * 2, w - i * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillRect(x0 + i, y0 + i, (w - i * 2) * 0.45, (w - i * 2) * 0.18);
+      break;
+    }
+    case 'pixel': {
+      const q = Math.max(2, Math.round(s * 0.12));
+      ctx.fillStyle = edge; ctx.fillRect(x + p, y + p, w, w);
+      ctx.fillStyle = face; ctx.fillRect(x + p, y + p, w - q, w - q);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(x + p, y + p, w - q, q); ctx.fillRect(x + p, y + p, q, w - q);
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(x + p + q * 2, y + p + q * 2, q, q);
+      break;
+    }
+    default: {
+      const r = s * 0.12;
+      ctx.fillStyle = 'rgba(8,9,20,0.45)'; rr(x + p, y + p + d * 0.6, w, w, r); ctx.fill();
+      ctx.fillStyle = edge; rr(x + p, y + p, w, w, r); ctx.fill();
+      ctx.fillStyle = face; rr(x + p, y + p, w, w - d, r); ctx.fill();
+      ctx.fillStyle = 'rgba(255,248,232,0.28)'; ctx.fillRect(x + p + r, y + p + s * 0.07, w - r * 2, Math.max(1, s * 0.035));
+      ctx.fillStyle = 'rgba(19,21,43,0.22)';
+      ctx.beginPath(); ctx.arc(x + s * 0.5, y + s * 0.47, s * 0.07, 0, 7); ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+function drawPiece(p, x, y, s, alpha) {
+  SHAPES[p.s].cells.forEach(([r, c]) => block(x + c * s, y + r * s, s, p.c, alpha));
+}
+let last = performance.now(), time = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  shake = Math.max(0, shake - dt * 40);
+  if (shake > 0.2 && !REDUCED) ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+
+  // scene
+  const sx = G.x, sy = G.sceneY, sw = G.bw, sh = G.sceneH;
+  spots.forEach(sp => { const target = sp.on ? 1 : 0; sp.glow += (target - sp.glow) * Math.min(1, dt * 2.2); });
+  const m = sceneMask.getContext('2d'), mw = sceneMask.width, mh = sceneMask.height;
+  m.globalCompositeOperation = 'source-over'; m.clearRect(0, 0, mw, mh);
+  const rad = Math.sqrt(mw * mh / spots.length) * 0.95;
+  spots.forEach(sp => {
+    if (sp.glow < 0.01) return;
+    const x = sp.x * mw, y = sp.y * mh, r = rad * (0.4 + 0.6 * sp.glow);
+    const gr = m.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, `rgba(255,255,255,${sp.glow})`); gr.addColorStop(0.55, `rgba(255,255,255,${sp.glow * 0.85})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    m.fillStyle = gr; m.fillRect(x - r, y - r, r * 2, r * 2);
+  });
+  m.globalCompositeOperation = 'source-in'; m.drawImage(sceneColor, 0, 0);
+  ctx.save(); rr(sx, sy, sw, sh, 6); ctx.clip();
+  ctx.drawImage(sceneDark, sx, sy, sw, sh);
+  ctx.drawImage(sceneMask, sx, sy, sw, sh);
+  if (reveal > 0) { ctx.globalAlpha = reveal; ctx.drawImage(sceneColor, sx, sy, sw, sh); ctx.globalAlpha = 1; }
+  // resting fireflies
+  ctx.globalCompositeOperation = 'lighter';
+  spots.forEach((sp, i) => {
+    if (sp.glow < 0.05) return;
+    for (let k = 0; k < 3; k++) {
+      const a = time * (0.6 + k * 0.25) + sp.ph + k * 2.1;
+      const x = sx + sp.x * sw + Math.cos(a) * 14 * (k + 1) * 0.6, y = sy + sp.y * sh + Math.sin(a * 1.3) * 9;
+      const tw = (0.5 + 0.5 * Math.sin(time * 3 + k + i)) * sp.glow;
+      glowDot(x, y, 2.2, tw);
+    }
+  });
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.restore();
+  ctx.strokeStyle = THEME.paper; ctx.lineWidth = 4; rr(sx + 2, sy + 2, sw - 4, sh - 4, 6); ctx.stroke();
+  ctx.strokeStyle = 'rgba(19,21,43,0.6)'; ctx.lineWidth = 1; rr(sx + 5, sy + 5, sw - 10, sh - 10, 4); ctx.stroke();
+
+  // board
+  const bx = G.x, by = G.boardY, c = G.cell;
+  ctx.fillStyle = THEME.ink2; rr(bx - 5, by - 5, G.bw + 10, G.bw + 10, 8); ctx.fill();
+  ctx.strokeStyle = rgba(THEME.paper, 0.14); ctx.lineWidth = 1; rr(bx - 2.5, by - 2.5, G.bw + 5, G.bw + 5, 6); ctx.stroke();
+  for (let r = 0; r < N; r++) for (let cc = 0; cc < N; cc++) {
+    const v = S.board[r][cc];
+    if (v === -1) {
+      ctx.fillStyle = THEME.ink; rr(bx + cc * c + c * 0.05, by + r * c + c * 0.05, c * 0.9, c * 0.9, c * 0.1); ctx.fill();
+      ctx.fillStyle = rgba(THEME.paper, 0.05); ctx.fillRect(bx + cc * c + c * 0.1, by + r * c + c * 0.86, c * 0.8, Math.max(1, c * 0.03));
+    }
+    else block(bx + cc * c, by + r * c, c, v);
+  }
+  // preview
+  let preview = null;
+  if (drag) {
+    const o = dragOrigin(drag), piece = S.tray[drag.i];
+    if (canPlace(piece, o.r0, o.c0)) {
+      preview = o;
+      drawPiece(piece, bx + o.c0 * c, by + o.r0 * c, c, 0.3);
+      // highlight lines that would clear
+      const tmp = S.board.map(row => row.slice());
+      SHAPES[piece.s].cells.forEach(([r, cc]) => { tmp[o.r0 + r][o.c0 + cc] = 1; });
+      ctx.fillStyle = rgba(THEME.accent, 0.14);
+      for (let r = 0; r < N; r++) if (tmp[r].every(v => v !== -1)) { rr(bx, by + r * c, G.bw, c, c * 0.2); ctx.fill(); }
+      for (let cc = 0; cc < N; cc++) if (tmp.every(row => row[cc] !== -1)) { rr(bx + cc * c, by, c, G.bw, c * 0.2); ctx.fill(); }
+    }
+  }
+  // bomb aim
+  if (bombArmed) {
+    const pulse = 0.5 + 0.5 * Math.sin(time * 6);
+    ctx.strokeStyle = `rgba(255,179,71,${0.5 + pulse * 0.5})`; ctx.lineWidth = 3;
+    rr(bx - 5, by - 5, G.bw + 10, G.bw + 10, 8); ctx.stroke();
+    ctx.fillStyle = THEME.ember; ctx.textAlign = 'center'; ctx.font = `800 ${Math.round(c * 0.34)}px 'Golos Text', system-ui, sans-serif`;
+    ctx.fillText('Нажми на поле, куда бросить бомбу', bx + G.bw / 2, by - 10);
+  }
+  // hint after a long pause
+  if (!drag && !bombArmed && !levelDone && $('overlay').hidden) idle += dt;
+  if (idle > 7 && !hint && !drag) hint = findHint();
+  if (hint && idle > 7 && S.tray[hint.i]) {
+    const a = 0.25 + 0.25 * Math.sin(time * 4);
+    drawPiece(S.tray[hint.i], bx + hint.c * c, by + hint.r * c, c, a);
+    const tr = trayRect(hint.i);
+    ctx.strokeStyle = rgba(THEME.accent, a + 0.2); ctx.lineWidth = 2; rr(tr.x + 6, tr.y + 2, tr.w - 12, tr.h - 4, 14); ctx.stroke();
+  }
+  // flashes
+  flashes = flashes.filter(f => (f.t += dt) < 0.5);
+  flashes.forEach(f => {
+    const k = 1 - f.t / 0.5, s = c * (1 + (1 - k) * 0.3), x = bx + f.c * c + (c - s) / 2, y = by + f.r * c + (c - s) / 2;
+    block(x, y, s, f.col, k);
+    ctx.fillStyle = rgba(THEME.paper, k * 0.7); rr(x + s * 0.1, y + s * 0.1, s * 0.8, s * 0.8, s * 0.2); ctx.fill();
+  });
+
+  // tray
+  for (let i = 0; i < 3; i++) {
+    const p = S.tray[i]; if (!p || (drag && drag.i === i)) continue;
+    const r = trayRect(i), sc = trayScale(p), shp = SHAPES[p.s], s = c * sc;
+    const fits = anyFits(p);
+    drawPiece(p, r.x + (r.w - shp.w * s) / 2, r.y + (r.h - shp.h * s) / 2, s, fits ? 1 : 0.35);
+  }
+  if (S.mode !== 'daily' && !drag) {
+    ctx.font = `600 ${Math.max(10, Math.round(c * 0.24))}px 'Golos Text', system-ui, sans-serif`; ctx.textAlign = 'center';
+    ctx.fillStyle = rgba(THEME.dim, 0.85);
+    ctx.fillText(S.rotates > 0 ? `Нажми на фигурку, чтобы повернуть · осталось ${S.rotates}` : 'Повороты кончились до следующей ночи', bx + G.bw / 2, G.trayY + G.trayH - 8);
+  }
+  if (drag) { const o = dragOrigin(drag); drawPiece(S.tray[drag.i], o.x, o.y, c, preview ? 0.95 : 0.8); }
+
+  // fireflies in flight
+  ctx.globalCompositeOperation = 'lighter';
+  particles = particles.filter(p => {
+    p.t += dt;
+    if (p.t < 0) return true;
+    const k = Math.min(1, p.t / p.dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    const x = (1 - e) * (1 - e) * p.sx + 2 * (1 - e) * e * p.cx + e * e * p.tx;
+    const y = (1 - e) * (1 - e) * p.sy + 2 * (1 - e) * e * p.cy + e * e * p.ty;
+    glowDot(x, y, 2.6, 0.9);
+    if (k >= 1) { const sp = spots[p.spot]; if (sp && !sp.on) { sp.on = true; sfxLit(); } return false; }
+    return true;
+  });
+  ctx.globalCompositeOperation = 'source-over';
+
+  // sparks
+  sparks = sparks.filter(p => (p.t += dt) < p.life);
+  sparks.forEach(p => {
+    p.vy += 420 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+    ctx.globalAlpha = 1 - p.t / p.life; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+
+  // streak badge
+  if (S.streak >= 2) {
+    const t = `СЕРИЯ ×${Math.min(S.streak, 5)}`;
+    ctx.font = `700 ${Math.round(c * 0.26)}px Unbounded, system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(t).width + c * 0.5, ph = c * 0.46, px = bx + G.bw / 2 - tw / 2, py = by + G.bw + 6 - ph / 2 + (Math.sin(time * 6) * 1.5);
+    ctx.fillStyle = THEME.ember; rr(px, py, tw, ph, ph / 2); ctx.fill();
+    ctx.fillStyle = THEME.ink; ctx.fillText(t, bx + G.bw / 2, py + ph / 2 + 1); ctx.textBaseline = 'alphabetic';
+  }
+
+  // floating text
+  floats = floats.filter(f => (f.t += dt) < (f.big ? 1.4 : 1.1));
+  floats.forEach(f => {
+    const life = f.big ? 1.4 : 1.1, k = f.t / life;
+    const pop = f.big ? 1 + Math.max(0, 0.4 - f.t * 2) : 1;
+    ctx.globalAlpha = 1 - k * k; ctx.textAlign = 'center';
+    ctx.font = `${f.big ? 900 : 700} ${Math.round(c * (f.big ? 0.62 : f.small ? 0.34 : 0.44) * pop)}px Unbounded, system-ui, sans-serif`;
+    const y = f.y - f.t * (f.big ? 20 : 40);
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, c * 0.12); ctx.strokeStyle = THEME.ink; ctx.strokeText(f.text, f.x, y);
+    ctx.fillStyle = f.big ? THEME.accent : THEME.paper; ctx.fillText(f.text, f.x, y);
+    ctx.globalAlpha = 1;
+  });
+
+  // level finished: wait for the last firefly, then light everything
+  if (levelDone && !revealing && particles.length === 0) {
+    revealing = true; sfxWin(); buzz([40, 60, 40, 60, 120]);
+    for (let k = 0; k < 6; k++) burst(G.x + G.bw * (0.1 + k * 0.16), G.sceneY + G.sceneH * (0.3 + Math.random() * 0.4), 18, [THEME.accent, THEME.ember, THEME.paper, COLORS[k % COLORS.length][0]][k % 4]);
+  }
+  if (revealing && reveal < 1) { reveal = Math.min(1, reveal + dt / 1.6); if (reveal >= 1) setTimeout(showWin, 300); }
+
+  requestAnimationFrame(frame);
+}
+function glowDot(x, y, r, a) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 5);
+  g.addColorStop(0, `rgba(255,255,220,${a})`); g.addColorStop(0.25, `rgba(220,255,120,${a * 0.7})`); g.addColorStop(1, 'rgba(200,255,100,0)');
+  ctx.fillStyle = g; ctx.fillRect(x - r * 5, y - r * 5, r * 10, r * 10);
+}
+
+/* ---------- Android back button ---------- */
+try {
+  const App = IS_APP && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (App) App.addListener('backButton', () => {
+    if (!$('overlay').hidden) closeCard();
+    else if (bombArmed) { bombArmed = false; updateHud(); }
+    else showMenu();
+  });
+} catch (e) {}
+
+/* ---------- boot ---------- */
+if (S.tray.every(p => !p)) newTray();
+layout(); updateHud();
+window.addEventListener('resize', layout);
+requestAnimationFrame(frame);
+if (S.mode === 'daily' && (!S.dailyGame || S.dailyGame.date !== todayKey())) { S.mode = 'night'; Object.assign(S, S.nightStash || {}); if (S.tray.every(p => !p)) newTray(); buildScene(); updateHud(); }
+if (!curInfo().endless && S.lit >= curInfo().need) levelDone = true;
+else if (!S.seenHelp) showHelp();
+else if (!S.tray.some(p => p && anyFits(p))) setTimeout(showStuck, 600);
+})();
+</script>

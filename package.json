@@ -1,0 +1,22 @@
+{
+  "name": "svetlyachki",
+  "version": "1.0.0",
+  "description": "Светлячки: блок-пазл для Android",
+  "scripts": {
+    "build:www": "python3 scripts/build-www.py",
+    "sync": "python3 scripts/build-www.py && python3 scripts/set-admob-app-id.py && npx cap sync android",
+    "art": "node scripts/make-art.js"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^8.4.2",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.2"
+  },
+  "private": true
+}

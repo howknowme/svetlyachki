@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Светлячки</string>
+    <string name="title_activity_main">Светлячки</string>
+    <string name="package_name">com.svetlyachki.puzzle</string>
+    <string name="custom_url_scheme">com.svetlyachki.puzzle</string>
+</resources>
